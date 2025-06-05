@@ -4,17 +4,19 @@ import routerImg from '../assets/router.png';
 import cloudImg from '../assets/cloud.png';
 
 function DashboardPage() {
-  const [ips, setIps] = useState({
+  const [data, setData] = useState({
     if1: 'Loading...',
     if2: 'Loading...',
-    server: 'Loading...'
+    server: 'Loading...',
+    modem1Name: 'Modem 1',
+    modem2Name: 'Modem 2',
   });
 
   useEffect(() => {
     fetch('http://localhost:8080/api/settings')
       .then(res => res.json())
-      .then(data => setIps(data))
-      .catch(err => console.error('❌ Error fetching IPs:', err));
+      .then(json => setData(json))
+      .catch(err => console.error('❌ Error fetching settings:', err));
   }, []);
 
   return (
@@ -37,17 +39,17 @@ function DashboardPage() {
 
           <div style={{ ...styles.node, top: '60px', left: '400px' }}>
             <img src={routerImg} alt="Modem 1" style={styles.icon} />
-            <p style={styles.nodeLabel}>Modem 1<br /><small>{ips.if1}</small></p>
+            <p style={styles.nodeLabel}>{data.modem1Name}<br /><small>{data.if1}</small></p>
           </div>
 
           <div style={{ ...styles.node, top: '300px', left: '400px' }}>
             <img src={routerImg} alt="Modem 2" style={styles.icon} />
-            <p style={styles.nodeLabel}>Modem 2<br /><small>{ips.if2}</small></p>
+            <p style={styles.nodeLabel}>{data.modem2Name}<br /><small>{data.if2}</small></p>
           </div>
 
           <div style={{ ...styles.node, top: '180px', left: '650px' }}>
             <img src={cloudImg} alt="Server" style={styles.icon} />
-            <p style={styles.nodeLabel}>Server<br /><small>{ips.server}</small></p>
+            <p style={styles.nodeLabel}>Server<br /><small>{data.server}</small></p>
           </div>
         </div>
       </div>

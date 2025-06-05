@@ -1,5 +1,7 @@
+// AnalysisPage.js
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import "./Analysis.css";
 import {
   LineChart,
   Line,
@@ -23,6 +25,10 @@ export default function AnalysisPage() {
           total: Number(row.total),
           m1: Number(row.m1),
           m2: Number(row.m2),
+          latencyM1: Number(row.latencyM1),
+          latencyM2: Number(row.latencyM2),
+          throughputM1: Number(row.throughputM1),
+          throughputM2: Number(row.throughputM2),
         }));
         console.log("Formatted chart data:", formatted);
         setData(formatted);
@@ -49,8 +55,31 @@ export default function AnalysisPage() {
     window.URL.revokeObjectURL(url);
   };
 
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      const row = payload[0].payload;
+      return (
+        <div className="custom-tooltip">
+          <p><strong>Time: {label}</strong></p>
+          <p className="total">Total: {row.total} Mbps</p>
+          <p className="m1">
+            M1: {row.m1} Mbps<br />
+            Latency: {row.latencyM1} ms<br />
+            Throughput: {row.throughputM1} Mbps
+          </p>
+          <p className="m2">
+            M2: {row.m2} Mbps<br />
+            Latency: {row.latencyM2} ms<br />
+            Throughput: {row.throughputM2} Mbps
+          </p>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
-    <div style={{ padding: "2rem" }}>
+    <div className="analysis-container">
       <h2>📊 Transfer Speed Analysis</h2>
 
       {data.length === 0 ? (
@@ -61,7 +90,7 @@ export default function AnalysisPage() {
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="time" />
             <YAxis />
-            <Tooltip />
+            <Tooltip content={<CustomTooltip />} />
             <Legend />
             <Line type="monotone" dataKey="total" stroke="#8884d8" name="Total" />
             <Line type="monotone" dataKey="m1" stroke="#82ca9d" name="M1" />
@@ -70,18 +99,7 @@ export default function AnalysisPage() {
         </ResponsiveContainer>
       )}
 
-      <button
-        onClick={handleExportCSV}
-        style={{
-          marginTop: "1rem",
-          padding: "0.5rem 1rem",
-          background: "#4CAF50",
-          color: "white",
-          border: "none",
-          borderRadius: "5px",
-          cursor: "pointer",
-        }}
-      >
+      <button className="export-button" onClick={handleExportCSV}>
         Export as CSV
       </button>
     </div>
