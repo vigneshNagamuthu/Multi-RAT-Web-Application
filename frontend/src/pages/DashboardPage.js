@@ -1,44 +1,54 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import laptopImg from '../assets/laptop.png';
 import routerImg from '../assets/router.png';
 import cloudImg from '../assets/cloud.png';
 
 function DashboardPage() {
+  const [ips, setIps] = useState({
+    if1: 'Loading...',
+    if2: 'Loading...',
+    server: 'Loading...'
+  });
+
+  useEffect(() => {
+    fetch('http://localhost:8080/api/settings')
+      .then(res => res.json())
+      .then(data => setIps(data))
+      .catch(err => console.error('❌ Error fetching IPs:', err));
+  }, []);
+
   return (
-    <div style={styles.container}>
-      <h2 style={styles.title}>Dashboard</h2>
+    <div style={styles.page}>
+      <div style={styles.container}>
+        <h2 style={styles.title}>Network Dashboard</h2>
 
-      <div style={styles.row}>
-        {/* SVG Lines */}
-        <svg style={styles.svg}>
-          {/* Laptop to M1 */}
-          <line x1="190" y1="150" x2="440" y2="100" style={styles.line} />
-          {/* Laptop to M2 */}
-          <line x1="190" y1="150" x2="440" y2="340" style={styles.line} />
-          {/* M1 to Server */}
-          <line x1="480" y1="100" x2="690" y2="200" style={styles.line} />
-          {/* M2 to Server (dashed) */}
-          <line x1="480" y1="340" x2="690" y2="200" style={styles.dashedLine} />
-        </svg>
+        <div style={styles.networkContainer}>
+          <svg style={styles.svg} viewBox="0 0 800 500" preserveAspectRatio="xMidYMid meet">
+            <line x1="150" y1="150" x2="400" y2="100" style={styles.line} />
+            <line x1="150" y1="150" x2="400" y2="340" style={styles.line} />
+            <line x1="440" y1="100" x2="650" y2="200" style={styles.dashedLine} />
+            <line x1="440" y1="340" x2="650" y2="200" style={styles.dashedLine} />
+          </svg>
 
-        <div style={{ ...styles.node, top: '100px', left: '150px' }}>
-          <img src={laptopImg} alt="Laptop" style={styles.icon} />
-          <p>Laptop<br /><small>192.168.100.1</small></p>
-        </div>
+          <div style={{ ...styles.node, top: '100px', left: '150px' }}>
+            <img src={laptopImg} alt="Client" style={styles.icon} />
+            <p style={styles.nodeLabel}>Client<br /><small>192.168.100.1</small></p>
+          </div>
 
-        <div style={{ ...styles.node, top: '60px', left: '400px' }}>
-          <img src={routerImg} alt="M1" style={styles.icon} />
-          <p>M1<br /><small>192.168.1.1</small></p>
-        </div>
+          <div style={{ ...styles.node, top: '60px', left: '400px' }}>
+            <img src={routerImg} alt="Modem 1" style={styles.icon} />
+            <p style={styles.nodeLabel}>Modem 1<br /><small>{ips.if1}</small></p>
+          </div>
 
-        <div style={{ ...styles.node, top: '300px', left: '400px' }}>
-          <img src={routerImg} alt="M2" style={styles.icon} />
-          <p>M2<br /><small>192.168.2.1</small></p>
-        </div>
+          <div style={{ ...styles.node, top: '300px', left: '400px' }}>
+            <img src={routerImg} alt="Modem 2" style={styles.icon} />
+            <p style={styles.nodeLabel}>Modem 2<br /><small>{ips.if2}</small></p>
+          </div>
 
-        <div style={{ ...styles.node, top: '180px', left: '650px' }}>
-          <img src={cloudImg} alt="Server" style={styles.icon} />
-          <p>Server<br /><small>47.129.143.46</small></p>
+          <div style={{ ...styles.node, top: '180px', left: '650px' }}>
+            <img src={cloudImg} alt="Server" style={styles.icon} />
+            <p style={styles.nodeLabel}>Server<br /><small>{ips.server}</small></p>
+          </div>
         </div>
       </div>
     </div>
@@ -46,46 +56,64 @@ function DashboardPage() {
 }
 
 const styles = {
+  page: {
+    fontFamily: 'sans-serif',
+  },
   container: {
+    textAlign: 'center',
+    marginTop: '40px',
+    padding: '0 20px',
+  },
+  title: {
+    fontSize: '24px',
+    marginBottom: '40px',
+  },
+  networkContainer: {
     position: 'relative',
     width: '100%',
     height: '600px',
     backgroundColor: '#fff',
     border: '1px solid #eee',
-    fontFamily: 'sans-serif',
-  },
-  title: {
-    textAlign: 'left',
-    padding: '20px 40px',
-    fontSize: '24px',
-  },
-  row: {
-    position: 'relative',
-    width: '100%',
-    height: '100%',
+    borderRadius: '8px',
+    margin: '0 auto',
+    maxWidth: '900px',
+    overflow: 'hidden',
   },
   node: {
     position: 'absolute',
     textAlign: 'center',
+    backgroundColor: '#fff',
+    padding: '10px',
+    borderRadius: '8px',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+    zIndex: 1,
+  },
+  nodeLabel: {
+    margin: '8px 0 0',
+    fontSize: '14px',
+    color: '#333',
   },
   icon: {
-    width: '80px',
-    marginBottom: '8px',
+    width: '60px',
+    height: '60px',
+    objectFit: 'contain',
   },
   svg: {
     position: 'absolute',
+    top: 0,
+    left: 0,
     width: '100%',
     height: '100%',
     zIndex: 0,
   },
   line: {
-    stroke: '#000',
+    stroke: '#666',
     strokeWidth: 2,
   },
   dashedLine: {
-    stroke: '#000',
+    stroke: '#666',
     strokeWidth: 2,
-    strokeDasharray: '6,4',
+    strokeDasharray: '5,5',
   },
 };
 

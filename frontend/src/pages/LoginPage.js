@@ -9,10 +9,10 @@ function LoginPage() {
   const handleLogin = (e) => {
     e.preventDefault();
 
-    // Simple dummy check (replace with real logic later)
     if (email === 'admin@example.com' && password === 'password123') {
+      localStorage.setItem('isLoggedIn', 'true'); // ✅ Set login flag
       alert('Login successful!');
-      navigate('/home'); // redirect to Dashboard
+      navigate('/home');
     } else {
       alert('Invalid email or password');
     }
@@ -45,27 +45,10 @@ function LoginPage() {
 }
 
 const styles = {
-  container: {
-    textAlign: 'center',
-    padding: '40px',
-  },
-  form: {
-    display: 'inline-block',
-    textAlign: 'left',
-    marginTop: '20px',
-  },
-  input: {
-    display: 'block',
-    marginBottom: '10px',
-    padding: '10px',
-    width: '250px',
-    fontSize: '16px',
-  },
-  button: {
-    padding: '10px 20px',
-    fontSize: '16px',
-    cursor: 'pointer',
-  },
+  container: { textAlign: 'center', padding: '40px' },
+  form: { display: 'inline-block', textAlign: 'left', marginTop: '20px' },
+  input: { display: 'block', marginBottom: '10px', padding: '10px', width: '250px', fontSize: '16px' },
+  button: { padding: '10px 20px', fontSize: '16px', cursor: 'pointer' },
 };
 
 export default LoginPage;

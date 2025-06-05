@@ -1,1 +1,7 @@
-/home/dani/Desktop/IS_Team6/backend/src/main/java/com/mptcp/App.java
+/Users/lis/Downloads/IS_Team6-main/ExampleApp/backend/src/main/java/com/example/demo/BackendApplication.java
+/Users/lis/Downloads/IS_Team6-main/ExampleApp/backend/src/main/java/com/example/demo/controller/AnalysisController.java
+/Users/lis/Downloads/IS_Team6-main/ExampleApp/backend/src/main/java/com/example/demo/controller/SettingsController.java
+/Users/lis/Downloads/IS_Team6-main/ExampleApp/backend/src/main/java/com/example/demo/model/IpSettings.java
+/Users/lis/Downloads/IS_Team6-main/ExampleApp/backend/src/main/java/com/example/demo/model/TransferData.java
+/Users/lis/Downloads/IS_Team6-main/ExampleApp/backend/src/main/java/com/example/demo/service/AnalysisService.java
+/Users/lis/Downloads/IS_Team6-main/ExampleApp/backend/src/main/java/com/example/demo/service/IpSettingsService.java

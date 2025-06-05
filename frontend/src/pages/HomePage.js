@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 function HomePage() {
   const [scheduler, setScheduler] = useState('');
-  const navigate = useNavigate();
 
   const handleSelectChange = (e) => {
     setScheduler(e.target.value);
@@ -21,16 +19,6 @@ function HomePage() {
 
   return (
     <div style={styles.page}>
-      <nav style={styles.navbar}>
-        <div style={styles.logo}>🌐</div>
-        <div style={styles.navLinks}>
-          <span onClick={() => navigate('/HomePage')}>Home</span>
-          <span onClick={() => navigate('/dashboard')}>Dashboard</span>
-          <span onClick={() => navigate('/analysis')}>Analysis</span>
-          <span onClick={() => navigate('/settings')}>Settings</span>
-        </div>
-      </nav>
-
       <div style={styles.container}>
         <h2>Choose a Scheduler</h2>
 
@@ -58,23 +46,6 @@ function HomePage() {
 const styles = {
   page: {
     fontFamily: 'sans-serif',
-  },
-  navbar: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    padding: '20px 40px',
-    borderBottom: '1px solid #eee',
-    alignItems: 'center',
-  },
-  logo: {
-    fontWeight: 'bold',
-    fontSize: '24px',
-  },
-  navLinks: {
-    display: 'flex',
-    gap: '30px',
-    cursor: 'pointer',
-    fontSize: '16px',
   },
   container: {
     textAlign: 'center',

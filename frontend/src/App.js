@@ -1,21 +1,52 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-
-import LoginPage from './pages/LoginPage';
+import Layout from './components/Layout';
 import HomePage from './pages/HomePage';
-import DashboardPage from './pages/DashboardPage';
-import SettingsPage from './pages/SettingsPage';
+import Dashboard from './pages/DashboardPage';
 import AnalysisPage from './pages/AnalysisPage';
+import SettingsPage from './pages/SettingsPage';
+import LoginPage from './pages/LoginPage';
+import PrivateRoute from './components/PrivateRoute'; // ✅ Add this import
 
 function App() {
   return (
     <Router>
       <Routes>
         <Route path="/" element={<LoginPage />} />
-        <Route path="/home" element={<HomePage />} />
-        <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/settings" element={<SettingsPage />} />
-        <Route path="/analysis" element={<AnalysisPage />} />
+        <Route path="/" element={<Layout />}>
+          <Route
+            path="home"
+            element={
+              <PrivateRoute>
+                <HomePage />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="dashboard"
+            element={
+              <PrivateRoute>
+                <Dashboard />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="analysis"
+            element={
+              <PrivateRoute>
+                <AnalysisPage />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="settings"
+            element={
+              <PrivateRoute>
+                <SettingsPage />
+              </PrivateRoute>
+            }
+          />
+        </Route>
       </Routes>
     </Router>
   );
