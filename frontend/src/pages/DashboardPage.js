@@ -18,25 +18,37 @@ function DashboardPage() {
   });
 
   useEffect(() => {
-    // Fetch IP settings
-    fetch('http://localhost:8080/api/settings')
-      .then(res => res.json())
-      .then(json => setData(json))
-      .catch(err => console.error('❌ Error fetching settings:', err));
-
-    // Fetch IP and interface name
+    // Fetch client and modem interface data
     fetch('http://localhost:8080/api/network-info')
       .then(res => res.json())
       .then(json => {
-        if (json.ip && json.interface) {
-          setClientInfo({ ip: json.ip, interface: json.interface });
-        } else {
-          setClientInfo({ ip: 'Not found', interface: 'Unknown' });
-        }
+        setClientInfo({
+          ip: json.client?.ip || 'Unavailable',
+          interface: json.client?.interface || 'N/A'
+        });
+        setData(prev => ({
+          ...prev,
+          if1: json.modem1?.ip || 'Unavailable',
+          if2: json.modem2?.ip || 'Unavailable'
+        }));
       })
       .catch(err => {
         console.error('❌ Error fetching network info:', err);
-        setClientInfo({ ip: 'Unavailable', interface: 'Unavailable' });
+      });
+
+    // Fetch server IP from settings
+    fetch('http://localhost:8080/api/settings')
+      .then(res => res.json())
+      .then(json => {
+        setData(prev => ({
+          ...prev,
+          server: json.server || 'Unavailable',
+          modem1Name: json.modem1Name || 'Modem 1',
+          modem2Name: json.modem2Name || 'Modem 2'
+        }));
+      })
+      .catch(err => {
+        console.error('❌ Error fetching settings:', err);
       });
   }, []);
 
@@ -64,17 +76,26 @@ function DashboardPage() {
 
           <div style={{ ...styles.node, top: '60px', left: '400px' }}>
             <img src={routerImg} alt="Modem 1" style={styles.icon} />
-            <p style={styles.nodeLabel}>{data.modem1Name}<br /><small>{data.if1}</small></p>
+            <p style={styles.nodeLabel}>
+              {data.modem1Name}<br />
+              <small>{data.if1}</small>
+            </p>
           </div>
 
           <div style={{ ...styles.node, top: '300px', left: '400px' }}>
             <img src={routerImg} alt="Modem 2" style={styles.icon} />
-            <p style={styles.nodeLabel}>{data.modem2Name}<br /><small>{data.if2}</small></p>
+            <p style={styles.nodeLabel}>
+              {data.modem2Name}<br />
+              <small>{data.if2}</small>
+            </p>
           </div>
 
           <div style={{ ...styles.node, top: '180px', left: '650px' }}>
             <img src={cloudImg} alt="Server" style={styles.icon} />
-            <p style={styles.nodeLabel}>Server<br /><small>{data.server}</small></p>
+            <p style={styles.nodeLabel}>
+              Server<br />
+              <small>{data.server}</small>
+            </p>
           </div>
         </div>
       </div>
