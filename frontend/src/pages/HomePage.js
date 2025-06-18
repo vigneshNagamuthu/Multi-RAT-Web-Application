@@ -1,15 +1,24 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import './HomePage.css';
 
 function HomePage() {
   const [scheduler, setScheduler] = useState('');
+  const navigate = useNavigate();
 
   const handleSelectChange = (e) => {
     setScheduler(e.target.value);
   };
 
   const handleUpload = () => {
+    if (!scheduler) {
+      alert('Please select a scheduler type.');
+      return;
+    }
+
+    localStorage.setItem('schedulerType', scheduler); // Store for use in AnalysisPage
     alert(`Uploading with scheduler: ${scheduler}`);
-    // You can add your upload logic here
+    navigate('/analysis'); // Navigate to AnalysisPage
   };
 
   const handleDownload = () => {
@@ -18,8 +27,8 @@ function HomePage() {
   };
 
   return (
-    <div style={styles.page}>
-      <div style={styles.container}>
+    <div className="page">
+      <div className="container">
         <h2>Choose a Scheduler</h2>
 
         <label htmlFor="scheduler">Scheduler Type</label>
@@ -27,52 +36,19 @@ function HomePage() {
           id="scheduler"
           value={scheduler}
           onChange={handleSelectChange}
-          style={styles.select}
         >
           <option value="">Select</option>
           <option value="Round Robin">Round Robin</option>
           <option value="RTT">RTT</option>
         </select>
 
-        <div style={styles.buttonGroup}>
-          <button style={styles.button} onClick={handleUpload}>Upload</button>
-          <button style={styles.button} onClick={handleDownload}>Download</button>
+        <div className="button-group">
+          <button className="button" onClick={handleUpload}>Upload</button>
+          <button className="button" onClick={handleDownload}>Download</button>
         </div>
       </div>
     </div>
   );
 }
-
-const styles = {
-  page: {
-    fontFamily: 'sans-serif',
-  },
-  container: {
-    textAlign: 'center',
-    marginTop: '80px',
-  },
-  select: {
-    display: 'block',
-    margin: '20px auto',
-    padding: '10px',
-    fontSize: '16px',
-    width: '200px',
-  },
-  buttonGroup: {
-    display: 'flex',
-    justifyContent: 'center',
-    gap: '20px',
-    marginTop: '30px',
-  },
-  button: {
-    padding: '10px 20px',
-    backgroundColor: '#333',
-    color: 'white',
-    border: 'none',
-    borderRadius: '5px',
-    fontSize: '16px',
-    cursor: 'pointer',
-  },
-};
 
 export default HomePage;

@@ -72,18 +72,17 @@ function SettingsPage() {
   };
 
   return (
-    <div style={styles.page}>
-      <div style={styles.container}>
+    <div className="page">
+      <div className="container">
         <h2>Network Settings</h2>
-        <p style={styles.description}>Configure the IP addresses for your network devices</p>
+        <p className="description">Configure the IP addresses for your network devices</p>
 
-        {/* Modem 1 IP + Name */}
-        <div style={styles.inputRow}>
+        <div className="input-row">
           {edit1 ? (
             <>
-              <input style={styles.input} value={modem1Name} onChange={(e) => setModem1Name(e.target.value)} />
+              <input className="input" value={modem1Name} onChange={(e) => setModem1Name(e.target.value)} />
               <button
-                style={styles.button}
+                className="button"
                 onClick={() => {
                   setEdit1(false);
                   saveModemName('modem1', modem1Name);
@@ -95,20 +94,19 @@ function SettingsPage() {
           ) : (
             <>
               <label>{modem1Name} IP</label>
-              <button style={styles.button} onClick={() => setEdit1(true)}>Edit Name</button>
+              <button className="button" onClick={() => setEdit1(true)}>Edit Name</button>
             </>
           )}
           <input
-            style={styles.input}
+            className="input"
             value={if1}
             onChange={e => setIf1(e.target.value)}
             placeholder="e.g., 192.168.1.1"
           />
-          <button style={styles.button} onClick={() => handleUpdate('IF1', if1)}>Update</button>
+          <button className="button" onClick={() => handleUpdate('IF1', if1)}>Update</button>
         </div>
 
-        {/* Modem 1 Power */}
-        <div style={styles.inputRow}>
+        <div className="input-row">
           <label>{modem1Name} Power</label>
           <label className="switch">
             <input
@@ -121,13 +119,12 @@ function SettingsPage() {
           <span>{modem1On ? 'ON' : 'OFF'}</span>
         </div>
 
-        {/* Modem 2 IP + Name */}
-        <div style={styles.inputRow}>
+        <div className="input-row">
           {edit2 ? (
             <>
-              <input style={styles.input} value={modem2Name} onChange={(e) => setModem2Name(e.target.value)} />
+              <input className="input" value={modem2Name} onChange={(e) => setModem2Name(e.target.value)} />
               <button
-                style={styles.button}
+                className="button"
                 onClick={() => {
                   setEdit2(false);
                   saveModemName('modem2', modem2Name);
@@ -139,20 +136,19 @@ function SettingsPage() {
           ) : (
             <>
               <label>{modem2Name} IP</label>
-              <button style={styles.button} onClick={() => setEdit2(true)}>Edit Name</button>
+              <button className="button" onClick={() => setEdit2(true)}>Edit Name</button>
             </>
           )}
           <input
-            style={styles.input}
+            className="input"
             value={if2}
             onChange={e => setIf2(e.target.value)}
             placeholder="e.g., 192.168.2.1"
           />
-          <button style={styles.button} onClick={() => handleUpdate('IF2', if2)}>Update</button>
+          <button className="button" onClick={() => handleUpdate('IF2', if2)}>Update</button>
         </div>
 
-        {/* Modem 2 Power */}
-        <div style={styles.inputRow}>
+        <div className="input-row">
           <label>{modem2Name} Power</label>
           <label className="switch">
             <input
@@ -165,62 +161,19 @@ function SettingsPage() {
           <span>{modem2On ? 'ON' : 'OFF'}</span>
         </div>
 
-        {/* Server IP */}
-        <div style={styles.inputRow}>
+        <div className="input-row">
           <label>Server IP</label>
           <input
-            style={styles.input}
+            className="input"
             value={server}
             onChange={e => setServer(e.target.value)}
             placeholder="e.g., 47.129.143.46"
           />
-          <button style={styles.button} onClick={() => handleUpdate('Server', server)}>Update</button>
+          <button className="button" onClick={() => handleUpdate('Server', server)}>Update</button>
         </div>
       </div>
     </div>
   );
 }
-
-const styles = {
-  page: {
-    fontFamily: 'sans-serif',
-  },
-  container: {
-    textAlign: 'center',
-    marginTop: '80px',
-    maxWidth: '700px',
-    margin: '80px auto 0',
-    padding: '0 20px',
-  },
-  description: {
-    color: '#666',
-    marginBottom: '30px',
-  },
-  inputRow: {
-    display: 'flex',
-    alignItems: 'center',
-    marginBottom: '20px',
-    gap: '10px',
-    justifyContent: 'center',
-    flexWrap: 'wrap',
-  },
-  input: {
-    flex: 1,
-    padding: '10px',
-    fontSize: '16px',
-    maxWidth: '200px',
-    border: '1px solid #ddd',
-    borderRadius: '4px',
-  },
-  button: {
-    backgroundColor: '#333',
-    color: 'white',
-    border: 'none',
-    padding: '10px 15px',
-    cursor: 'pointer',
-    fontSize: '14px',
-    borderRadius: '5px',
-  },
-};
 
 export default SettingsPage;

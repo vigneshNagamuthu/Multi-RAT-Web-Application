@@ -1,4 +1,3 @@
-// AnalysisPage.js
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import "./Analysis.css";
@@ -15,10 +14,14 @@ import {
 
 export default function AnalysisPage() {
   const [data, setData] = useState([]);
+  const [schedulerType, setSchedulerType] = useState("Unknown");
 
   useEffect(() => {
+    const type = localStorage.getItem("schedulerType") || "download";
+    setSchedulerType(type);
+
     axios
-      .get("http://localhost:8080/api/analysis?type=download")
+      .get(`http://localhost:8080/api/analysis?type=${encodeURIComponent(type)}`)
       .then((response) => {
         const formatted = response.data.map((row) => ({
           time: Number(row.time),
@@ -30,7 +33,6 @@ export default function AnalysisPage() {
           throughputM1: Number(row.throughputM1),
           throughputM2: Number(row.throughputM2),
         }));
-        console.log("Formatted chart data:", formatted);
         setData(formatted);
       })
       .catch((error) => {
@@ -49,7 +51,7 @@ export default function AnalysisPage() {
 
     const a = document.createElement("a");
     a.href = url;
-    a.download = "analysis_data.csv";
+    a.download = `${schedulerType.replace(/\s+/g, '_')}_analysis.csv`;
     a.click();
 
     window.URL.revokeObjectURL(url);
@@ -81,6 +83,9 @@ export default function AnalysisPage() {
   return (
     <div className="analysis-container">
       <h2>📊 Transfer Speed Analysis</h2>
+      <p style={{ textAlign: "center", fontSize: "16px", color: "#666" }}>
+        Scheduler Type: <strong>{schedulerType}</strong>
+      </p>
 
       {data.length === 0 ? (
         <p>Loading or no data available...</p>

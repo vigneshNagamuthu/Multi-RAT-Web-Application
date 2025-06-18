@@ -1,5 +1,6 @@
 /Users/lis/Downloads/IS_Team6-main/ExampleApp/backend/src/main/java/com/example/demo/BackendApplication.java
 /Users/lis/Downloads/IS_Team6-main/ExampleApp/backend/src/main/java/com/example/demo/controller/AnalysisController.java
+/Users/lis/Downloads/IS_Team6-main/ExampleApp/backend/src/main/java/com/example/demo/controller/NetworkInfoController.java
 /Users/lis/Downloads/IS_Team6-main/ExampleApp/backend/src/main/java/com/example/demo/controller/SettingsController.java
 /Users/lis/Downloads/IS_Team6-main/ExampleApp/backend/src/main/java/com/example/demo/model/IpSettings.java
 /Users/lis/Downloads/IS_Team6-main/ExampleApp/backend/src/main/java/com/example/demo/model/ModemStatus.java

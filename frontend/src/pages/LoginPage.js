@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import './LoginPage.css';
 
 function LoginPage() {
   const [email, setEmail] = useState('');
@@ -10,7 +11,7 @@ function LoginPage() {
     e.preventDefault();
 
     if (email === 'admin@example.com' && password === 'password123') {
-      localStorage.setItem('isLoggedIn', 'true'); // ✅ Set login flag
+      localStorage.setItem('isLoggedIn', 'true');
       alert('Login successful!');
       navigate('/home');
     } else {
@@ -19,15 +20,15 @@ function LoginPage() {
   };
 
   return (
-    <div style={styles.container}>
-      <h2>Login Page</h2>
-      <form onSubmit={handleLogin} style={styles.form}>
+    <div className="login-container">
+      <form onSubmit={handleLogin} className="login-form">
+        <h2>Login Page</h2>
         <input
           type="email"
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          style={styles.input}
+          className="login-input"
           required
         />
         <input
@@ -35,20 +36,13 @@ function LoginPage() {
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          style={styles.input}
+          className="login-input"
           required
         />
-        <button type="submit" style={styles.button}>Login</button>
+        <button type="submit" className="login-button">Login</button>
       </form>
     </div>
   );
 }
-
-const styles = {
-  container: { textAlign: 'center', padding: '40px' },
-  form: { display: 'inline-block', textAlign: 'left', marginTop: '20px' },
-  input: { display: 'block', marginBottom: '10px', padding: '10px', width: '250px', fontSize: '16px' },
-  button: { padding: '10px 20px', fontSize: '16px', cursor: 'pointer' },
-};
 
 export default LoginPage;

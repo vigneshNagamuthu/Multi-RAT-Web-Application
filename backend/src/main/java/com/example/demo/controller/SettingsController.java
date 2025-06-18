@@ -8,7 +8,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/settings")
-@CrossOrigin(origins = "http://localhost:3006")
+@CrossOrigin(origins = "http://localhost:3000")
 public class SettingsController {
 
     // Store current IPs and names

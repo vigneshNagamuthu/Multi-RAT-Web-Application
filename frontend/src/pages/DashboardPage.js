@@ -12,11 +12,32 @@ function DashboardPage() {
     modem2Name: 'Modem 2',
   });
 
+  const [clientInfo, setClientInfo] = useState({
+    ip: 'Loading...',
+    interface: 'Loading...'
+  });
+
   useEffect(() => {
+    // Fetch IP settings
     fetch('http://localhost:8080/api/settings')
       .then(res => res.json())
       .then(json => setData(json))
       .catch(err => console.error('❌ Error fetching settings:', err));
+
+    // Fetch IP and interface name
+    fetch('http://localhost:8080/api/network-info')
+      .then(res => res.json())
+      .then(json => {
+        if (json.ip && json.interface) {
+          setClientInfo({ ip: json.ip, interface: json.interface });
+        } else {
+          setClientInfo({ ip: 'Not found', interface: 'Unknown' });
+        }
+      })
+      .catch(err => {
+        console.error('❌ Error fetching network info:', err);
+        setClientInfo({ ip: 'Unavailable', interface: 'Unavailable' });
+      });
   }, []);
 
   return (
@@ -34,7 +55,11 @@ function DashboardPage() {
 
           <div style={{ ...styles.node, top: '100px', left: '150px' }}>
             <img src={laptopImg} alt="Client" style={styles.icon} />
-            <p style={styles.nodeLabel}>Client<br /><small>192.168.100.1</small></p>
+            <p style={styles.nodeLabel}>
+              Client<br />
+              <small>{clientInfo.ip}</small><br />
+              <small>({clientInfo.interface})</small>
+            </p>
           </div>
 
           <div style={{ ...styles.node, top: '60px', left: '400px' }}>
@@ -94,6 +119,7 @@ const styles = {
     margin: '8px 0 0',
     fontSize: '14px',
     color: '#333',
+    lineHeight: 1.4,
   },
   icon: {
     width: '60px',
