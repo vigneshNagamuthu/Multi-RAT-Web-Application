@@ -4,10 +4,7 @@ import routerImg from '../assets/router.png';
 
 function DashboardPage() {
   const [modems, setModems] = useState([]);
-  const [clientInfo, setClientInfo] = useState({
-    ip: 'Loading...',
-    interface: 'Loading...'
-  });
+  const [interfaces, setInterfaces] = useState([]);
 
   useEffect(() => {
     fetch('http://localhost:8080/api/settings')
@@ -18,15 +15,22 @@ function DashboardPage() {
     fetch('http://localhost:8080/api/network-info')
       .then(res => res.json())
       .then(json => {
-        if (json.ip && json.interface) {
-          setClientInfo({ ip: json.ip, interface: json.interface });
-        } else {
-          setClientInfo({ ip: 'Not found', interface: 'Unknown' });
+        // Collect all interface info from the backend response
+        const ifaceList = [];
+        for (const key of Object.keys(json)) {
+          if (json[key] && json[key].ip && json[key].interface) {
+            ifaceList.push({
+              label: key,
+              ip: json[key].ip,
+              interface: json[key].interface
+            });
+          }
         }
+        setInterfaces(ifaceList);
       })
       .catch(err => {
         console.error('❌ Error fetching network info:', err);
-        setClientInfo({ ip: 'Unavailable', interface: 'Unavailable' });
+        setInterfaces([]);
       });
   }, []);
 
@@ -55,13 +59,44 @@ function DashboardPage() {
             })}
           </svg>
 
+          {/* Floating IP labels along the lines */}
+          {modems.map((modem, i) => {
+            // Map interface to modem by order
+            const iface = interfaces[i];
+            const clientX = 210, clientY = 150;
+            const modemX = 500, modemY = 100 + i * 120 + 50; // 50 is half the modem box height
+            const midX = (clientX + modemX) / 2;
+            const midY = (clientY + modemY) / 2;
+            return iface ? (
+              <div
+                key={`ip-label-${i}`}
+                style={{
+                  position: 'absolute',
+                  left: `${midX}px`,
+                  top: `${midY - 20}px`, // slightly above the line
+                  background: 'rgba(255,255,255,0.95)',
+                  padding: '2px 8px',
+                  borderRadius: '6px',
+                  fontSize: '13px',
+                  color: '#222',
+                  boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
+                  pointerEvents: 'none',
+                  zIndex: 2,
+                  border: '1px solid #eee',
+                  minWidth: '120px',
+                  textAlign: 'center',
+                }}
+              >
+                <b>{iface.interface}</b>: {iface.ip}
+              </div>
+            ) : null;
+          })}
+
           {/* Client Node */}
           <div style={{ ...styles.node, top: '100px', left: '100px' }}>
             <img src={laptopImg} alt="Client" style={styles.icon} />
             <p style={styles.nodeLabel}>
-              Client<br />
-              <small>{clientInfo.ip}</small><br />
-              <small>({clientInfo.interface})</small>
+              Client
             </p>
           </div>
 
@@ -72,8 +107,7 @@ function DashboardPage() {
               <div key={modem.id} style={{ ...styles.node, top: `${top}px`, left: '500px' }}>
                 <img src={routerImg} alt={modem.name} style={styles.icon} />
                 <p style={styles.nodeLabel}>
-                  {modem.name}<br />
-                  <small>{modem.ip}</small>
+                  {modem.name}
                 </p>
               </div>
             );

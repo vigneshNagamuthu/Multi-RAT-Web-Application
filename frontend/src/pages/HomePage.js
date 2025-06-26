@@ -1,10 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './HomePage.css';
 
 function HomePage() {
   const [scheduler, setScheduler] = useState('');
+  const [schedulers, setSchedulers] = useState([]);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    fetch('http://localhost:8080/api/schedulers')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setSchedulers(data);
+        } else if (typeof data === 'string') {
+          setSchedulers(data.trim().split(/\s+/));
+        } else {
+          setSchedulers([]);
+        }
+      })
+      .catch(() => setSchedulers([]));
+  }, []);
 
   const handleSelectChange = (e) => {
     setScheduler(e.target.value);
@@ -38,8 +54,9 @@ function HomePage() {
           onChange={handleSelectChange}
         >
           <option value="">Select</option>
-          <option value="Round Robin">Round Robin</option>
-          <option value="RTT">RTT</option>
+          {schedulers.map(s => (
+            <option key={s} value={s}>{s}</option>
+          ))}
         </select>
 
         <div className="button-group">

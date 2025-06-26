@@ -18,6 +18,8 @@ import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 
 @CrossOrigin(origins = "http://localhost:3000")
 @RestController
@@ -43,16 +45,14 @@ public class NetworkInfoController {
                     String local = (String) addr.get("local");
 
                     if ("inet".equals(family)) {
-                        switch (ifName) {
-                            case "ens33":
-                                result.put("client", Map.of("interface", ifName, "ip", local));
-                                break;
-                            case "dummy0":
-                                result.put("modem1", Map.of("interface", ifName, "ip", local));
-                                break;
-                            case "dummy1":
-                                result.put("modem2", Map.of("interface", ifName, "ip", local));
-                                break;
+                        if (ifName != null && ifName.startsWith("ens")) {
+                            result.put(ifName, Map.of("interface", ifName, "ip", local));
+                        }
+                        if ("dummy0".equals(ifName)) {
+                            result.put("modem1", Map.of("interface", ifName, "ip", local));
+                        }
+                        if ("dummy1".equals(ifName)) {
+                            result.put("modem2", Map.of("interface", ifName, "ip", local));
                         }
                     }
                 }
