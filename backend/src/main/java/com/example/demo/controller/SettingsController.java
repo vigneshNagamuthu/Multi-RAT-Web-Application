@@ -1,9 +1,13 @@
 package com.example.demo.controller;
 
+import com.example.demo.model.IpSettings.Modem;
 import com.example.demo.model.ModemStatus;
+import com.example.demo.service.IpSettingsService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -11,70 +15,57 @@ import java.util.Map;
 @CrossOrigin(origins = "http://localhost:3000")
 public class SettingsController {
 
-    // Store current IPs and names
-    private String if1 = "192.168.1.1";
-    private String if2 = "192.168.2.1";
-    private String server = "47.129.143.46";
-    private String modem1Name = "Modem 1";
-    private String modem2Name = "Modem 2";
+    @Autowired
+    private IpSettingsService ipSettingsService;
 
-    // ====== IP UPDATES ======
-    @PostMapping("/{target}")
-    public ResponseEntity<String> updateIp(@PathVariable String target, @RequestBody Map<String, String> body) {
-        String ip = body.get("ip");
-
-        switch (target.toLowerCase()) {
-            case "if1" -> if1 = ip;
-            case "if2" -> if2 = ip;
-            case "server" -> server = ip;
-            default -> {
-                return ResponseEntity.badRequest().body("Invalid target");
-            }
-        }
-
-        System.out.println("✅ Updated " + target + " to " + ip);
-        return ResponseEntity.ok(target + " IP updated");
-    }
-
-    // ====== GET ALL SETTINGS ======
+    // Get all modems
     @GetMapping
-    public Map<String, String> getAllSettings() {
-        return Map.of(
-            "if1", if1,
-            "if2", if2,
-            "server", server,
-            "modem1Name", modem1Name,
-            "modem2Name", modem2Name
-        );
+    public List<Modem> getAllModems() {
+        return ipSettingsService.getSettings().getModems();
     }
 
-    // ====== POWER TOGGLE ======
-    @PostMapping("/modem1/power")
-    public ResponseEntity<String> toggleModem1(@RequestBody ModemStatus status) {
-        System.out.println("⚡ Modem 1 turned " + (status.isOn() ? "ON" : "OFF"));
-        return ResponseEntity.ok("Modem 1 is now " + (status.isOn() ? "ON" : "OFF"));
+    // Add a new modem
+    @PostMapping("/modems")
+    public ResponseEntity<String> addModem(@RequestBody Modem modem) {
+        ipSettingsService.addModem(modem);
+        System.out.println("➕ Added modem: " + modem.getName());
+        return ResponseEntity.ok("Modem added");
     }
 
-    @PostMapping("/modem2/power")
-    public ResponseEntity<String> toggleModem2(@RequestBody ModemStatus status) {
-        System.out.println("⚡ Modem 2 turned " + (status.isOn() ? "ON" : "OFF"));
-        return ResponseEntity.ok("Modem 2 is now " + (status.isOn() ? "ON" : "OFF"));
+    // Delete a modem
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteModem(@PathVariable String id) {
+        boolean removed = ipSettingsService.removeModemById(id);
+        if (removed) {
+            System.out.println("🗑️ Deleted modem: " + id);
+            return ResponseEntity.ok("Modem deleted");
+        } else {
+            return ResponseEntity.badRequest().body("Modem not found");
+        }
     }
 
-    // ====== NAME UPDATES ======
-    @PostMapping("/modem1/name")
-    public ResponseEntity<String> updateModem1Name(@RequestBody Map<String, String> body) {
+    // Update modem IP
+    @PostMapping("/{id}/ip")
+    public ResponseEntity<String> updateIp(@PathVariable String id, @RequestBody Map<String, String> body) {
+        String ip = body.get("ip");
+        boolean success = ipSettingsService.updateModemIp(id, ip);
+        return success ? ResponseEntity.ok("IP updated") : ResponseEntity.badRequest().body("Modem not found");
+    }
+
+    // Update modem name
+    @PostMapping("/{id}/name")
+    public ResponseEntity<String> updateName(@PathVariable String id, @RequestBody Map<String, String> body) {
         String name = body.get("name");
-        modem1Name = name;
-        System.out.println("✏️ Modem 1 name updated to: " + name);
-        return ResponseEntity.ok("Modem 1 name saved");
+        boolean success = ipSettingsService.updateModemName(id, name);
+        return success ? ResponseEntity.ok("Name updated") : ResponseEntity.badRequest().body("Modem not found");
     }
 
-    @PostMapping("/modem2/name")
-    public ResponseEntity<String> updateModem2Name(@RequestBody Map<String, String> body) {
-        String name = body.get("name");
-        modem2Name = name;
-        System.out.println("✏️ Modem 2 name updated to: " + name);
-        return ResponseEntity.ok("Modem 2 name saved");
+    // Update modem power state
+    @PostMapping("/{id}/power")
+    public ResponseEntity<String> togglePower(@PathVariable String id, @RequestBody ModemStatus status) {
+        boolean success = ipSettingsService.updateModemPower(id, status.isOn());
+        return success
+                ? ResponseEntity.ok("Power updated to " + (status.isOn() ? "ON" : "OFF"))
+                : ResponseEntity.badRequest().body("Modem not found");
     }
 }

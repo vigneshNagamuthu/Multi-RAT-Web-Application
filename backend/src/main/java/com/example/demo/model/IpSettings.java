@@ -1,17 +1,44 @@
 package com.example.demo.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class IpSettings {
-    private String if1;
-    private String if2;
-    private String server;
+    private List<Modem> modems = new ArrayList<>();
 
-    // Getters and setters
-    public String getIf1() { return if1; }
-    public void setIf1(String if1) { this.if1 = if1; }
+    public List<Modem> getModems() {
+        return modems;
+    }
 
-    public String getIf2() { return if2; }
-    public void setIf2(String if2) { this.if2 = if2; }
+    public void setModems(List<Modem> modems) {
+        this.modems = modems;
+    }
 
-    public String getServer() { return server; }
-    public void setServer(String server) { this.server = server; }
+    public static class Modem {
+        private String id;
+        private String name;
+        private String ip;
+        private boolean power;
+
+        public Modem() {}
+
+        public Modem(String id, String name, String ip, boolean power) {
+            this.id = id;
+            this.name = name;
+            this.ip = ip;
+            this.power = power;
+        }
+
+        public String getId() { return id; }
+        public void setId(String id) { this.id = id; }
+
+        public String getName() { return name; }
+        public void setName(String name) { this.name = name; }
+
+        public String getIp() { return ip; }
+        public void setIp(String ip) { this.ip = ip; }
+
+        public boolean isPower() { return power; }
+        public void setPower(boolean power) { this.power = power; }
+    }
 }

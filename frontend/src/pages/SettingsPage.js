@@ -3,27 +3,13 @@ import axios from 'axios';
 import './Settings.css';
 
 function SettingsPage() {
-  const [if1, setIf1] = useState('');
-  const [if2, setIf2] = useState('');
-  const [server, setServer] = useState('');
-  const [modem1On, setModem1On] = useState(false);
-  const [modem2On, setModem2On] = useState(false);
-  const [modem1Name, setModem1Name] = useState('Modem 1');
-  const [modem2Name, setModem2Name] = useState('Modem 2');
-  const [edit1, setEdit1] = useState(false);
-  const [edit2, setEdit2] = useState(false);
+  const [modems, setModems] = useState([]);
 
   useEffect(() => {
     fetch('http://localhost:8080/api/settings')
-      .then((res) => res.json())
-      .then((data) => {
-        setIf1(data.if1);
-        setIf2(data.if2);
-        setServer(data.server);
-        setModem1Name(data.modem1Name || 'Modem 1');
-        setModem2Name(data.modem2Name || 'Modem 2');
-      })
-      .catch((err) => console.error('❌ Failed to load initial settings:', err));
+      .then(res => res.json())
+      .then(data => setModems(data.map(m => ({ ...m, editing: false }))))
+      .catch(err => console.error('❌ Failed to load initial settings:', err));
   }, []);
 
   const isValidIP = (ip) => {
@@ -31,43 +17,73 @@ function SettingsPage() {
     return ipRegex.test(ip);
   };
 
-  const handleUpdate = async (label, value) => {
-    if (!value.trim()) {
-      alert(`${label} cannot be empty.`);
-      return;
-    }
-
-    if (!isValidIP(value)) {
-      alert(`${label} must be a valid IP address (e.g., 192.168.1.1).`);
-      return;
-    }
-
+  const handleUpdate = async (id, ip) => {
+    if (!ip.trim()) return alert("IP cannot be empty.");
+    if (!isValidIP(ip)) return alert("Invalid IP address format.");
     try {
-      await axios.post(`http://localhost:8080/api/settings/${label.toLowerCase()}`, { ip: value });
-      alert(`${label} IP updated to: ${value}`);
-    } catch (error) {
-      console.error("Update failed:", error);
-      alert(`Failed to update ${label}`);
+      await axios.post(`http://localhost:8080/api/settings/${id}/ip`, { ip });
+      alert(`Updated ${id} to ${ip}`);
+    } catch (e) {
+      alert(`Failed to update ${id}`);
     }
   };
 
-  const handleToggleModem = async (modem, currentState, setState) => {
-    const newState = !currentState;
+  const handleToggleModem = async (id, index) => {
+    const updated = [...modems];
+    const newPower = !updated[index].power;
     try {
-      await axios.post(`http://localhost:8080/api/settings/${modem}/power`, { on: newState });
-      setState(newState);
-    } catch (error) {
-      console.error(`Failed to toggle ${modem}`, error);
-      alert(`Failed to toggle ${modem}`);
+      await axios.post(`http://localhost:8080/api/settings/${id}/power`, { on: newPower });
+      updated[index].power = newPower;
+      setModems(updated);
+    } catch (e) {
+      alert(`Failed to toggle power for ${id}`);
     }
   };
 
-  const saveModemName = async (modem, name) => {
+  const saveModemName = async (id, index) => {
+    const updated = [...modems];
     try {
-      await axios.post(`http://localhost:8080/api/settings/${modem}/name`, { name });
-    } catch (error) {
-      console.error(`Failed to update ${modem} name`, error);
-      alert(`Failed to save ${modem} name`);
+      await axios.post(`http://localhost:8080/api/settings/${id}/name`, { name: updated[index].name });
+      updated[index].editing = false;
+      setModems(updated);
+    } catch (e) {
+      alert(`Failed to rename ${id}`);
+    }
+  };
+
+  const addModem = async () => {
+    let name = prompt("Enter a name for the new modem:");
+    if (!name || !name.trim()) return alert("Modem name is required.");
+
+    name = name.trim();
+    const newId = name.toLowerCase().replace(/\s+/g, '-'); // e.g., "Modem 3" → "modem-3"
+
+    if (modems.some(m => m.id === newId)) {
+      return alert("A modem with this name already exists.");
+    }
+
+    const newModem = {
+      id: newId,
+      name,
+      ip: '',
+      power: false,
+    };
+
+    try {
+      await axios.post('http://localhost:8080/api/settings/modems', newModem);
+      setModems([...modems, { ...newModem, editing: false }]);
+    } catch (e) {
+      alert('Failed to add new modem');
+    }
+  };
+
+  const deleteModem = async (id) => {
+    if (!window.confirm(`Are you sure you want to delete ${id}?`)) return;
+    try {
+      await axios.delete(`http://localhost:8080/api/settings/${id}`);
+      setModems(modems.filter(m => m.id !== id));
+    } catch (e) {
+      alert(`Failed to delete ${id}`);
     }
   };
 
@@ -77,99 +93,62 @@ function SettingsPage() {
         <h2>Network Settings</h2>
         <p className="description">Configure the IP addresses for your network devices</p>
 
-        <div className="input-row">
-          {edit1 ? (
-            <>
-              <input className="input" value={modem1Name} onChange={(e) => setModem1Name(e.target.value)} />
-              <button
-                className="button"
-                onClick={() => {
-                  setEdit1(false);
-                  saveModemName('modem1', modem1Name);
+        {modems.map((modem, index) => (
+          <div key={modem.id}>
+            <div className="input-row">
+              {modem.editing ? (
+                <>
+                  <input
+                    className="input"
+                    value={modem.name}
+                    onChange={(e) => {
+                      const updated = [...modems];
+                      updated[index].name = e.target.value;
+                      setModems(updated);
+                    }}
+                  />
+                  <button className="button" onClick={() => saveModemName(modem.id, index)}>Save</button>
+                </>
+              ) : (
+                <>
+                  <label>{modem.name} IP</label>
+                  <button className="button" onClick={() => {
+                    const updated = [...modems];
+                    updated[index].editing = true;
+                    setModems(updated);
+                  }}>Edit Name</button>
+                </>
+              )}
+              <input
+                className="input"
+                value={modem.ip}
+                onChange={(e) => {
+                  const updated = [...modems];
+                  updated[index].ip = e.target.value;
+                  setModems(updated);
                 }}
-              >
-                Save
-              </button>
-            </>
-          ) : (
-            <>
-              <label>{modem1Name} IP</label>
-              <button className="button" onClick={() => setEdit1(true)}>Edit Name</button>
-            </>
-          )}
-          <input
-            className="input"
-            value={if1}
-            onChange={e => setIf1(e.target.value)}
-            placeholder="e.g., 192.168.1.1"
-          />
-          <button className="button" onClick={() => handleUpdate('IF1', if1)}>Update</button>
-        </div>
+                placeholder="e.g., 192.168.1.1"
+              />
+              <button className="button" onClick={() => handleUpdate(modem.id, modem.ip)}>Update</button>
+
+              {/* Power toggle next to Delete */}
+              <label className="switch" style={{ marginLeft: '10px' }}>
+                <input
+                  type="checkbox"
+                  checked={modem.power}
+                  onChange={() => handleToggleModem(modem.id, index)}
+                />
+                <span className="slider round"></span>
+              </label>
+              <span style={{ margin: '0 10px' }}>{modem.power ? 'ON' : 'OFF'}</span>
+
+              <button className="button danger" onClick={() => deleteModem(modem.id)}>Delete</button>
+            </div>
+          </div>
+        ))}
 
         <div className="input-row">
-          <label>{modem1Name} Power</label>
-          <label className="switch">
-            <input
-              type="checkbox"
-              checked={modem1On}
-              onChange={() => handleToggleModem('modem1', modem1On, setModem1On)}
-            />
-            <span className="slider round"></span>
-          </label>
-          <span>{modem1On ? 'ON' : 'OFF'}</span>
-        </div>
-
-        <div className="input-row">
-          {edit2 ? (
-            <>
-              <input className="input" value={modem2Name} onChange={(e) => setModem2Name(e.target.value)} />
-              <button
-                className="button"
-                onClick={() => {
-                  setEdit2(false);
-                  saveModemName('modem2', modem2Name);
-                }}
-              >
-                Save
-              </button>
-            </>
-          ) : (
-            <>
-              <label>{modem2Name} IP</label>
-              <button className="button" onClick={() => setEdit2(true)}>Edit Name</button>
-            </>
-          )}
-          <input
-            className="input"
-            value={if2}
-            onChange={e => setIf2(e.target.value)}
-            placeholder="e.g., 192.168.2.1"
-          />
-          <button className="button" onClick={() => handleUpdate('IF2', if2)}>Update</button>
-        </div>
-
-        <div className="input-row">
-          <label>{modem2Name} Power</label>
-          <label className="switch">
-            <input
-              type="checkbox"
-              checked={modem2On}
-              onChange={() => handleToggleModem('modem2', modem2On, setModem2On)}
-            />
-            <span className="slider round"></span>
-          </label>
-          <span>{modem2On ? 'ON' : 'OFF'}</span>
-        </div>
-
-        <div className="input-row">
-          <label>Server IP</label>
-          <input
-            className="input"
-            value={server}
-            onChange={e => setServer(e.target.value)}
-            placeholder="e.g., 47.129.143.46"
-          />
-          <button className="button" onClick={() => handleUpdate('Server', server)}>Update</button>
+          <button className="button" onClick={addModem}>+ Add Modem</button>
         </div>
       </div>
     </div>

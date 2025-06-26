@@ -1,30 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import laptopImg from '../assets/laptop.png';
 import routerImg from '../assets/router.png';
-import cloudImg from '../assets/cloud.png';
 
 function DashboardPage() {
-  const [data, setData] = useState({
-    if1: 'Loading...',
-    if2: 'Loading...',
-    server: 'Loading...',
-    modem1Name: 'Modem 1',
-    modem2Name: 'Modem 2',
-  });
-
+  const [modems, setModems] = useState([]);
   const [clientInfo, setClientInfo] = useState({
     ip: 'Loading...',
     interface: 'Loading...'
   });
 
   useEffect(() => {
-    // Fetch IP settings
     fetch('http://localhost:8080/api/settings')
       .then(res => res.json())
-      .then(json => setData(json))
-      .catch(err => console.error('❌ Error fetching settings:', err));
+      .then(data => setModems(data))
+      .catch(err => console.error('❌ Error fetching modem settings:', err));
 
-    // Fetch IP and interface name
     fetch('http://localhost:8080/api/network-info')
       .then(res => res.json())
       .then(json => {
@@ -46,14 +36,27 @@ function DashboardPage() {
         <h2 style={styles.title}>Network Dashboard</h2>
 
         <div style={styles.networkContainer}>
-          <svg style={styles.svg} viewBox="0 0 800 500" preserveAspectRatio="xMidYMid meet">
-            <line x1="150" y1="150" x2="400" y2="100" style={styles.line} />
-            <line x1="150" y1="150" x2="400" y2="340" style={styles.line} />
-            <line x1="440" y1="100" x2="650" y2="200" style={styles.dashedLine} />
-            <line x1="440" y1="340" x2="650" y2="200" style={styles.dashedLine} />
+          {/* Draw lines dynamically */}
+          <svg style={styles.svg} viewBox="0 0 900 600" preserveAspectRatio="xMidYMid meet">
+            {modems.map((_, i) => {
+              const modemBoxTop = 100 + i * 120;
+              const modemBoxHeight = 100;
+              const y2 = modemBoxTop + modemBoxHeight / 2;
+              return (
+                <line
+                  key={`line-${i}`}
+                  x1="210"
+                  y1="150"
+                  x2="500"
+                  y2={y2}
+                  style={styles.line}
+                />
+              );
+            })}
           </svg>
 
-          <div style={{ ...styles.node, top: '100px', left: '150px' }}>
+          {/* Client Node */}
+          <div style={{ ...styles.node, top: '100px', left: '100px' }}>
             <img src={laptopImg} alt="Client" style={styles.icon} />
             <p style={styles.nodeLabel}>
               Client<br />
@@ -62,20 +65,19 @@ function DashboardPage() {
             </p>
           </div>
 
-          <div style={{ ...styles.node, top: '60px', left: '400px' }}>
-            <img src={routerImg} alt="Modem 1" style={styles.icon} />
-            <p style={styles.nodeLabel}>{data.modem1Name}<br /><small>{data.if1}</small></p>
-          </div>
-
-          <div style={{ ...styles.node, top: '300px', left: '400px' }}>
-            <img src={routerImg} alt="Modem 2" style={styles.icon} />
-            <p style={styles.nodeLabel}>{data.modem2Name}<br /><small>{data.if2}</small></p>
-          </div>
-
-          <div style={{ ...styles.node, top: '180px', left: '650px' }}>
-            <img src={cloudImg} alt="Server" style={styles.icon} />
-            <p style={styles.nodeLabel}>Server<br /><small>{data.server}</small></p>
-          </div>
+          {/* Modem Nodes */}
+          {modems.map((modem, i) => {
+            const top = 100 + i * 120;
+            return (
+              <div key={modem.id} style={{ ...styles.node, top: `${top}px`, left: '500px' }}>
+                <img src={routerImg} alt={modem.name} style={styles.icon} />
+                <p style={styles.nodeLabel}>
+                  {modem.name}<br />
+                  <small>{modem.ip}</small>
+                </p>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
@@ -103,7 +105,7 @@ const styles = {
     border: '1px solid #eee',
     borderRadius: '8px',
     margin: '0 auto',
-    maxWidth: '900px',
+    maxWidth: '1000px',
     overflow: 'hidden',
   },
   node: {
@@ -114,6 +116,7 @@ const styles = {
     borderRadius: '8px',
     boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
     zIndex: 1,
+    width: '120px'
   },
   nodeLabel: {
     margin: '8px 0 0',
@@ -137,11 +140,6 @@ const styles = {
   line: {
     stroke: '#666',
     strokeWidth: 2,
-  },
-  dashedLine: {
-    stroke: '#666',
-    strokeWidth: 2,
-    strokeDasharray: '5,5',
   },
 };
 

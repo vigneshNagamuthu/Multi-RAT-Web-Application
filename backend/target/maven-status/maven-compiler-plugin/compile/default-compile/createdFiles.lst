@@ -7,4 +7,5 @@ com/example/demo/controller/SettingsController.class
 com/example/demo/controller/NetworkInfoController.class
 com/example/demo/model/IpSettings.class
 com/example/demo/service/AnalysisService.class
+com/example/demo/model/IpSettings$Modem.class
 com/example/demo/model/ModemStatus.class
