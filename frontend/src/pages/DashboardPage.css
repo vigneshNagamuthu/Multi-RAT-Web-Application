@@ -1,0 +1,79 @@
+.dashboard-page {
+  font-family: sans-serif;
+}
+
+.dashboard-container {
+  text-align: center;
+  margin-top: 40px;
+  padding: 0 20px;
+}
+
+.dashboard-title {
+  font-size: 24px;
+  margin-bottom: 40px;
+}
+
+.network-container {
+  position: relative;
+  width: 100%;
+  height: 600px;
+  background-color: #fff;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  margin: 0 auto;
+  max-width: 1000px;
+  overflow: hidden;
+}
+
+.dashboard-node {
+  position: absolute;
+  text-align: center;
+  background-color: #fff;
+  padding: 10px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  z-index: 1;
+  width: 120px;
+}
+
+.dashboard-node-label {
+  margin: 8px 0 0;
+  font-size: 14px;
+  color: #333;
+  line-height: 1.4;
+}
+
+.dashboard-icon {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+}
+
+.dashboard-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+.dashboard-line {
+  stroke: #666;
+  stroke-width: 2;
+}
+
+.ip-label {
+  position: absolute;
+  background: rgba(255,255,255,0.95);
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #222;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  pointer-events: none;
+  z-index: 2;
+  border: 1px solid #eee;
+  min-width: 120px;
+  text-align: center;
+} 
