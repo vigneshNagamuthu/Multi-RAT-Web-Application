@@ -13,8 +13,8 @@ public class IpSettingsService {
 
     public IpSettingsService() {
         // Optional: preload default modems
-        addModem(new Modem("modem1", "Modem 1", "192.168.1.1", false));
-        addModem(new Modem("modem2", "Modem 2", "192.168.2.1", false));
+        addModem(new Modem("modem1", "Modem 1", "192.168.1.1", false, "ens33"));
+        addModem(new Modem("modem2", "Modem 2", "192.168.2.1", false, "ens34"));
     }
 
     public IpSettings getSettings() {

@@ -1,79 +1,166 @@
 .dashboard-page {
-  font-family: sans-serif;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f0f2f5;
+  min-height: 100vh;
+  padding: 20px;
 }
 
 .dashboard-container {
-  text-align: center;
-  margin-top: 40px;
-  padding: 0 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 15px;
 }
 
 .dashboard-title {
-  font-size: 24px;
-  margin-bottom: 40px;
+  font-size: 28px;
+  margin-bottom: 30px;
+  color: #212529;
+  font-weight: 600;
 }
 
-.network-container {
+/* Devices Grid Layout */
+.devices-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 25px;
+}
+
+/* Device Card Styling */
+.device-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  padding: 25px;
+  transition: all 0.3s ease;
+  border: 1px solid #eaeaea;
+}
+
+.device-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 16px rgba(67, 97, 238, 0.15);
+}
+
+.device-card.disabled {
+  opacity: 0.7;
+  background-color: #f9f9f9;
+}
+
+/* Device Header */
+.device-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #eee;
+}
+
+.device-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: #4361ee;
+  margin: 0;
+}
+
+.device-status {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+/* Status Indicator */
+.status-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-indicator.active {
+  background: #4cc9f0;
+  box-shadow: 0 0 0 3px rgba(76, 201, 240, 0.3);
+}
+
+.status-indicator.inactive {
+  background: #adb5bd;
+}
+
+/* Toggle Switch */
+.toggle-switch {
   position: relative;
-  width: 100%;
-  height: 600px;
-  background-color: #fff;
-  border: 1px solid #eee;
-  border-radius: 8px;
-  margin: 0 auto;
-  max-width: 1000px;
-  overflow: hidden;
+  display: inline-block;
+  width: 50px;
+  height: 24px;
 }
 
-.dashboard-node {
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
   position: absolute;
-  text-align: center;
-  background-color: #fff;
-  padding: 10px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  z-index: 1;
-  width: 120px;
-}
-
-.dashboard-node-label {
-  margin: 8px 0 0;
-  font-size: 14px;
-  color: #333;
-  line-height: 1.4;
-}
-
-.dashboard-icon {
-  width: 60px;
-  height: 60px;
-  object-fit: contain;
-}
-
-.dashboard-svg {
-  position: absolute;
+  cursor: pointer;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 24px;
 }
 
-.dashboard-line {
-  stroke: #666;
-  stroke-width: 2;
-}
-
-.ip-label {
+.slider:before {
   position: absolute;
-  background: rgba(255,255,255,0.95);
-  padding: 2px 8px;
-  border-radius: 6px;
-  font-size: 13px;
-  color: #222;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-  pointer-events: none;
-  z-index: 2;
-  border: 1px solid #eee;
-  min-width: 120px;
-  text-align: center;
-} 
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: #4361ee;
+}
+
+input:checked + .slider:before {
+  transform: translateX(26px);
+}
+
+/* Device Details */
+.device-details {
+  padding-top: 15px;
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.detail-label {
+  color: #6c757d;
+  font-size: 14px;
+}
+
+.detail-value {
+  font-weight: 500;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  color: #212529;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .devices-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .dashboard-title {
+    font-size: 24px;
+  }
+}

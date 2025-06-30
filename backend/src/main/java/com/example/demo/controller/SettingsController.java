@@ -7,8 +7,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/settings")
@@ -18,54 +21,40 @@ public class SettingsController {
     @Autowired
     private IpSettingsService ipSettingsService;
 
-    // Get all modems
     @GetMapping
-    public List<Modem> getAllModems() {
+    public java.util.List<Modem> getAllModems() {
         return ipSettingsService.getSettings().getModems();
     }
 
-    // Add a new modem
-    @PostMapping("/modems")
-    public ResponseEntity<String> addModem(@RequestBody Modem modem) {
-        ipSettingsService.addModem(modem);
-        System.out.println("➕ Added modem: " + modem.getName());
-        return ResponseEntity.ok("Modem added");
-    }
-
-    // Delete a modem
-    @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteModem(@PathVariable String id) {
-        boolean removed = ipSettingsService.removeModemById(id);
-        if (removed) {
-            System.out.println("🗑️ Deleted modem: " + id);
-            return ResponseEntity.ok("Modem deleted");
-        } else {
-            return ResponseEntity.badRequest().body("Modem not found");
-        }
-    }
-
-    // Update modem IP
-    @PostMapping("/{id}/ip")
-    public ResponseEntity<String> updateIp(@PathVariable String id, @RequestBody Map<String, String> body) {
-        String ip = body.get("ip");
-        boolean success = ipSettingsService.updateModemIp(id, ip);
-        return success ? ResponseEntity.ok("IP updated") : ResponseEntity.badRequest().body("Modem not found");
-    }
-
-    // Update modem name
-    @PostMapping("/{id}/name")
-    public ResponseEntity<String> updateName(@PathVariable String id, @RequestBody Map<String, String> body) {
-        String name = body.get("name");
-        boolean success = ipSettingsService.updateModemName(id, name);
-        return success ? ResponseEntity.ok("Name updated") : ResponseEntity.badRequest().body("Modem not found");
-    }
-
-    // Update modem power state
     @PostMapping("/{id}/power")
-    public ResponseEntity<String> togglePower(@PathVariable String id, @RequestBody ModemStatus status) {
-        boolean success = ipSettingsService.updateModemPower(id, status.isOn());
-        return success
-                ? ResponseEntity.ok("Power updated to " + (status.isOn() ? "ON" : "OFF"))
-                : ResponseEntity.badRequest().body("Modem not found");
+    public ResponseEntity<Map<String, String>> togglePower(@PathVariable String id, @RequestBody ModemStatus status) {
+        Optional<Modem> modemOpt = ipSettingsService.getModemById(id);
+        if (modemOpt.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Modem not found"));
+        }
+
+        Modem modem = modemOpt.get();
+        String iface = modem.getInterfaceName();
+        if (iface == null || iface.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Missing interface name"));
+        }
+
+        try {
+            String command = "sudo /sbin/ip link set " + iface + (status.isOn() ? " up" : " down");
+            Process process = Runtime.getRuntime().exec(new String[]{"bash", "-c", command});
+            int exit = process.waitFor();
+
+            if (exit != 0) {
+                BufferedReader err = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+                String errorMessage = err.lines().collect(Collectors.joining("\n"));
+                return ResponseEntity.status(500).body(Map.of("error", "Interface toggle failed: " + errorMessage));
+            }
+
+            ipSettingsService.updateModemPower(id, status.isOn());
+            System.out.println("[POWER] " + modem.getId() + " (" + iface + "): " + (status.isOn() ? "ON" : "OFF"));
+            return ResponseEntity.ok(Map.of("message", "Interface toggled successfully"));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("error", "Exception: " + e.getMessage()));
+        }
     }
 }

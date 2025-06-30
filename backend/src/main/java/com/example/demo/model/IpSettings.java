@@ -19,14 +19,17 @@ public class IpSettings {
         private String name;
         private String ip;
         private boolean power;
+        private String interfaceName;
+        private String port; // ✅ New field added
 
         public Modem() {}
 
-        public Modem(String id, String name, String ip, boolean power) {
+        public Modem(String id, String name, String ip, boolean power, String interfaceName) {
             this.id = id;
             this.name = name;
             this.ip = ip;
             this.power = power;
+            this.interfaceName = interfaceName;
         }
 
         public String getId() { return id; }
@@ -40,5 +43,11 @@ public class IpSettings {
 
         public boolean isPower() { return power; }
         public void setPower(boolean power) { this.power = power; }
+
+        public String getInterfaceName() { return interfaceName; }
+        public void setInterfaceName(String interfaceName) { this.interfaceName = interfaceName; }
+
+        public String getPort() { return port; }
+        public void setPort(String port) { this.port = port; } // ✅ Getter/setter for port
     }
 }
