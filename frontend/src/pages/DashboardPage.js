@@ -14,7 +14,7 @@ function DashboardPage() {
         setModems(data);
         const enabledState = {};
         data.forEach(modem => {
-          enabledState[modem.id] = modem.power; // reflects backend's power state
+          enabledState[modem.interfaceName] = modem.power; // key by interfaceName
         });
         setEnabledModems(enabledState);
       })
@@ -42,7 +42,9 @@ function DashboardPage() {
       });
   }, []);
 
-  const getModemInterface = (i) => interfaces[i] || { ip: '-', interface: '-', state: '-' };
+  // Find modem by interface name
+  const getModemByInterface = (ifaceName) =>
+    modems.find(m => m.interfaceName === ifaceName);
 
   const toggleModem = (modemId, newPower) => {
     fetch(`http://localhost:8080/api/settings/${modemId}/power`, {
@@ -74,30 +76,31 @@ function DashboardPage() {
         <h2 className="dashboard-title">Network Dashboard</h2>
 
         <div className="devices-grid">
-          {modems.map((modem, i) => {
-            const iface = getModemInterface(i);
-            const isEnabled = enabledModems[modem.id];
-
+          {interfaces.map((iface, i) => {
+            const modem = getModemByInterface(iface.interface);
+            const isEnabled = modem ? enabledModems[modem.interfaceName] : undefined;
             return (
               <div
-                key={modem.id}
-                className={`device-card ${isEnabled ? '' : 'disabled'}`}
+                key={iface.interface}
+                className={`device-card ${modem && isEnabled ? '' : modem ? 'disabled' : ''}`}
               >
                 <div className="device-header">
-                  <h3 className="device-name">Network {i + 1}</h3>
+                  <h3 className="device-name">{iface.label}</h3>
                   <div className="device-status">
                     <span
-                      className={`status-indicator ${isEnabled ? 'active' : 'inactive'}`}
-                      title={isEnabled ? "Connected" : "Disabled"}
+                      className={`status-indicator ${modem ? (isEnabled ? 'active' : 'inactive') : 'unknown'}`}
+                      title={modem ? (isEnabled ? 'Connected' : 'Disabled') : 'No toggle available'}
                     ></span>
-                    <label className="toggle-switch">
-                      <input
-                        type="checkbox"
-                        checked={isEnabled}
-                        onChange={() => toggleModem(modem.id, !isEnabled)}
-                      />
-                      <span className="slider"></span>
-                    </label>
+                    {modem && (
+                      <label className="toggle-switch">
+                        <input
+                          type="checkbox"
+                          checked={isEnabled}
+                          onChange={() => toggleModem(modem.id, !isEnabled)}
+                        />
+                        <span className="slider"></span>
+                      </label>
+                    )}
                   </div>
                 </div>
 

@@ -4,55 +4,83 @@ import com.example.demo.model.IpSettings;
 import com.example.demo.model.IpSettings.Modem;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Optional;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.util.*;
 
 @Service
 public class IpSettingsService {
-    private final IpSettings ipSettings = new IpSettings();
-
-    public IpSettingsService() {
-        // Optional: preload default modems
-        addModem(new Modem("modem1", "Modem 1", "192.168.1.1", false, "ens33"));
-        addModem(new Modem("modem2", "Modem 2", "192.168.2.1", false, "ens34"));
-    }
-
     public IpSettings getSettings() {
+        IpSettings ipSettings = new IpSettings();
+        Map<String, Boolean> powerStates = getPowerStates();
+        try {
+            Process process = Runtime.getRuntime().exec("ifconfig -a");
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String line;
+            String currentInterface = null;
+            String currentIp = null;
+            while ((line = reader.readLine()) != null) {
+                if (!line.startsWith(" ") && line.contains(":")) {
+                    if (currentInterface != null && !"lo".equals(currentInterface)) {
+                        boolean power = powerStates.getOrDefault(currentInterface, true);
+                        ipSettings.getModems().add(new Modem(currentInterface, currentInterface, currentIp != null ? currentIp : "-", power, currentInterface));
+                    }
+                    currentInterface = line.split(":")[0].trim();
+                    currentIp = null;
+                }
+                if (line.trim().startsWith("inet ")) {
+                    String[] parts = line.trim().split(" ");
+                    for (int i = 0; i < parts.length; i++) {
+                        if ("inet".equals(parts[i]) && i + 1 < parts.length) {
+                            String ip = parts[i + 1];
+                            if (!"127.0.0.1".equals(ip)) {
+                                currentIp = ip;
+                            }
+                        }
+                    }
+                }
+            }
+            // Add the last interface
+            if (currentInterface != null && !"lo".equals(currentInterface)) {
+                boolean power = powerStates.getOrDefault(currentInterface, true);
+                ipSettings.getModems().add(new Modem(currentInterface, currentInterface, currentIp != null ? currentIp : "-", power, currentInterface));
+            }
+        } catch (Exception e) {
+            // ignore, return what we have
+        }
         return ipSettings;
     }
 
-    public void addModem(Modem modem) {
-        ipSettings.getModems().add(modem);
-    }
+    // Store power state in memory (could be improved with persistence)
+    private static final Map<String, Boolean> interfacePowerState = new HashMap<>();
 
-    public boolean removeModemById(String id) {
-        return ipSettings.getModems().removeIf(modem -> modem.getId().equalsIgnoreCase(id));
+    private Map<String, Boolean> getPowerStates() {
+        return interfacePowerState;
     }
 
     public Optional<Modem> getModemById(String id) {
-        return ipSettings.getModems().stream()
+        return getSettings().getModems().stream()
                 .filter(m -> m.getId().equalsIgnoreCase(id))
                 .findFirst();
     }
 
+    public boolean updateModemPower(String id, boolean on) {
+        interfacePowerState.put(id, on);
+        return true;
+    }
+
     public boolean updateModemIp(String id, String ip) {
-        return getModemById(id).map(m -> {
-            m.setIp(ip);
-            return true;
-        }).orElse(false);
+        // Not supported in dynamic mode
+        return false;
     }
 
     public boolean updateModemName(String id, String name) {
-        return getModemById(id).map(m -> {
-            m.setName(name);
-            return true;
-        }).orElse(false);
+        // Not supported in dynamic mode
+        return false;
     }
 
-    public boolean updateModemPower(String id, boolean on) {
-        return getModemById(id).map(m -> {
-            m.setPower(on);
-            return true;
-        }).orElse(false);
+    public boolean removeModemById(String id) {
+        // Not supported in dynamic mode
+        return false;
     }
 }
