@@ -13,31 +13,33 @@ import {
 } from "recharts";
 
 export default function AnalysisPage() {
-  const [data, setData] = useState([]);
+  const [data, setData] = useState(undefined);
   const [schedulerType, setSchedulerType] = useState("Unknown");
 
   useEffect(() => {
-    const type = localStorage.getItem("schedulerType") || "download";
-    setSchedulerType(type);
-
-    axios
-      .get(`http://localhost:8080/api/analysis?type=${encodeURIComponent(type)}`)
-      .then((response) => {
-        const formatted = response.data.map((row) => ({
-          time: Number(row.time),
-          total: Number(row.total),
-          m1: Number(row.m1),
-          m2: Number(row.m2),
-          latencyM1: Number(row.latencyM1),
-          latencyM2: Number(row.latencyM2),
-          throughputM1: Number(row.throughputM1),
-          throughputM2: Number(row.throughputM2),
-        }));
-        setData(formatted);
-      })
-      .catch((error) => {
-        console.error("Error fetching analysis data: ", error);
+    const iperfResult = localStorage.getItem('iperfResult');
+    if (iperfResult) {
+      // Parse iperf3 output for bandwidth/time
+      const { output } = JSON.parse(iperfResult);
+      const lines = output.split('\n');
+      const dataPoints = [];
+      // Only match lines like: [  5]   1.00-2.00   sec  49.8 MBytes   418 Mbits/sec  ...
+      const regex = /^\[\s*\d+\]\s+(\d+\.\d+)-(\d+\.\d+)\s+sec\s+[\d.]+\s+MBytes\s+([\d.]+)\s+Mbits\/sec/;
+      lines.forEach(line => {
+        const match = line.match(regex);
+        if (match) {
+          const bandwidth = parseFloat(match[3]);
+          dataPoints.push({ total: bandwidth });
+        }
       });
+      // Add tick (x-axis) as index, but exclude last two points (summary lines)
+      const trimmed = dataPoints.length > 2 ? dataPoints.slice(0, -2) : dataPoints;
+      const dataWithTicks = trimmed.map((d, i) => ({ ...d, tick: i }));
+      setData(dataWithTicks);
+      return;
+    }
+    // No iperfResult present
+    setData(null);
   }, []);
 
   const handleExportCSV = () => {
@@ -87,19 +89,23 @@ export default function AnalysisPage() {
         Scheduler Type: <strong>{schedulerType}</strong>
       </p>
 
-      {data.length === 0 ? (
+      {data === undefined ? (
+        <p style={{textAlign: 'center', margin: '2rem'}}>Loading test results...</p>
+      ) : data === null ? (
+        <p style={{color: 'red', textAlign: 'center'}}>No iperf3 test data available. Please run an Upload or Download test first.</p>
+      ) : data.length === 0 ? (
         <p>Loading or no data available...</p>
       ) : (
         <ResponsiveContainer width="100%" height={400}>
           <LineChart data={data}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="time" />
+            <XAxis dataKey="tick" />
             <YAxis />
             <Tooltip content={<CustomTooltip />} />
             <Legend />
             <Line type="monotone" dataKey="total" stroke="#8884d8" name="Total" />
-            <Line type="monotone" dataKey="m1" stroke="#82ca9d" name="M1" />
-            <Line type="monotone" dataKey="m2" stroke="#ff7300" name="M2" />
+            <Line type="monotone" dataKey="m1" stroke="#82ca9d" name="Network 1" />
+            <Line type="monotone" dataKey="m2" stroke="#ff7300" name="Network 2" />
           </LineChart>
         </ResponsiveContainer>
       )}
