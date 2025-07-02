@@ -18,7 +18,6 @@ export default function Layout() {
           <span onClick={() => navigate('/home')}>Home</span>
           <span onClick={() => navigate('/dashboard')}>Dashboard</span>
           <span onClick={() => navigate('/analysis')}>Analysis</span>
-          <span onClick={() => navigate('/settings')}>Settings</span>
           <span onClick={handleLogout} style={styles.logout}>Logout</span>
         </div>
       </nav>

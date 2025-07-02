@@ -4,7 +4,6 @@ import Layout from './components/Layout';
 import HomePage from './pages/HomePage';
 import Dashboard from './pages/DashboardPage';
 import AnalysisPage from './pages/AnalysisPage';
-import SettingsPage from './pages/SettingsPage';
 import LoginPage from './pages/LoginPage';
 import PrivateRoute from './components/PrivateRoute'; // ✅ Add this import
 
@@ -35,14 +34,6 @@ function App() {
             element={
               <PrivateRoute>
                 <AnalysisPage />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="settings"
-            element={
-              <PrivateRoute>
-                <SettingsPage />
               </PrivateRoute>
             }
           />
