@@ -15,31 +15,29 @@ import {
 export default function AnalysisPage() {
   const [data, setData] = useState(undefined);
   const [schedulerType, setSchedulerType] = useState("Unknown");
+  const [interfaces, setInterfaces] = useState([]);
 
   useEffect(() => {
     const iperfResult = localStorage.getItem('iperfResult');
     if (iperfResult) {
-      // Parse iperf3 output for bandwidth/time
-      const { output } = JSON.parse(iperfResult);
-      const lines = output.split('\n');
-      const dataPoints = [];
-      // Only match lines like: [  5]   1.00-2.00   sec  49.8 MBytes   418 Mbits/sec  ...
-      const regex = /^\[\s*\d+\]\s+(\d+\.\d+)-(\d+\.\d+)\s+sec\s+[\d.]+\s+MBytes\s+([\d.]+)\s+Mbits\/sec/;
-      lines.forEach(line => {
-        const match = line.match(regex);
-        if (match) {
-          const bandwidth = parseFloat(match[3]);
-          dataPoints.push({ total: bandwidth });
-        }
-      });
-      // Add tick (x-axis) as index, but exclude last two points (summary lines)
-      const trimmed = dataPoints.length > 2 ? dataPoints.slice(0, -2) : dataPoints;
-      const dataWithTicks = trimmed.map((d, i) => ({ ...d, tick: i }));
-      setData(dataWithTicks);
-      return;
+      const parsed = JSON.parse(iperfResult);
+      const samples = parsed.samples;
+      const ifaces = parsed.interfaces || [];
+      setInterfaces(ifaces);
+      if (Array.isArray(samples) && samples.length > 0) {
+        setData(samples.map((s, i) => {
+          const row = { tick: s.second || i + 1, total: s.total || 0 };
+          ifaces.forEach(iface => {
+            row[iface] = s[iface] || 0;
+          });
+          return row;
+        }));
+        return;
+      }
     }
-    // No iperfResult present
+    // No iperfResult present or no samples
     setData(null);
+    setInterfaces([]);
   }, []);
 
   const handleExportCSV = () => {
@@ -65,17 +63,10 @@ export default function AnalysisPage() {
       return (
         <div className="custom-tooltip">
           <p><strong>Time: {label}</strong></p>
-          <p className="total">Total: {row.total} Mbps</p>
-          <p className="m1">
-            M1: {row.m1} Mbps<br />
-            Latency: {row.latencyM1} ms<br />
-            Throughput: {row.throughputM1} Mbps
-          </p>
-          <p className="m2">
-            M2: {row.m2} Mbps<br />
-            Latency: {row.latencyM2} ms<br />
-            Throughput: {row.throughputM2} Mbps
-          </p>
+          <p className="total">Total Throughput: {row.total} Mbps</p>
+          {interfaces.map(iface => (
+            <p key={iface} className="m1">{iface} Throughput: {row[iface]} Mbps</p>
+          ))}
         </div>
       );
     }
@@ -103,9 +94,16 @@ export default function AnalysisPage() {
             <YAxis />
             <Tooltip content={<CustomTooltip />} />
             <Legend />
-            <Line type="monotone" dataKey="total" stroke="#8884d8" name="Total" />
-            <Line type="monotone" dataKey="m1" stroke="#82ca9d" name="Network 1" />
-            <Line type="monotone" dataKey="m2" stroke="#ff7300" name="Network 2" />
+            <Line type="monotone" dataKey="total" stroke="#8884d8" name="Total Throughput" />
+            {interfaces.map((iface, idx) => (
+              <Line
+                key={iface}
+                type="monotone"
+                dataKey={iface}
+                stroke={['#82ca9d', '#ff7300', '#0088FE', '#FFBB28', '#00C49F', '#FF8042'][idx % 6]}
+                name={`${iface} Throughput`}
+              />
+            ))}
           </LineChart>
         </ResponsiveContainer>
       )}

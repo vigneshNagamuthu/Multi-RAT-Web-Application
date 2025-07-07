@@ -8,6 +8,7 @@ function HomePage() {
   const [loading, setLoading] = useState(false);
   const [targetIp, setTargetIp] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  const [schedulerTouched, setSchedulerTouched] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -27,11 +28,16 @@ function HomePage() {
 
   const handleSelectChange = (e) => {
     setScheduler(e.target.value);
+    setSchedulerTouched(true);
   };
 
   const handleUpload = async () => {
     if (!targetIp) {
       alert('Please enter a target IP address.');
+      return;
+    }
+    if (!scheduler) {
+      alert('Please select a scheduler.');
       return;
     }
     try {
@@ -40,7 +46,7 @@ function HomePage() {
       const res = await fetch('http://localhost:8080/api/analysis/upload', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ip: targetIp })
+        body: JSON.stringify({ ip: targetIp, scheduler })
       });
       const data = await res.json();
       if (data.error) {
@@ -63,13 +69,17 @@ function HomePage() {
       alert('Please enter a target IP address.');
       return;
     }
+    if (!scheduler) {
+      alert('Please select a scheduler.');
+      return;
+    }
     try {
       setLoading(true);
       setErrorMsg('');
       const res = await fetch('http://localhost:8080/api/analysis/download', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ip: targetIp })
+        body: JSON.stringify({ ip: targetIp, scheduler })
       });
       const data = await res.json();
       if (data.error) {
@@ -97,12 +107,16 @@ function HomePage() {
           id="scheduler"
           value={scheduler}
           onChange={handleSelectChange}
+          onBlur={() => setSchedulerTouched(true)}
         >
           <option value="">Select</option>
           {schedulers.map(s => (
             <option key={s} value={s}>{s}</option>
           ))}
         </select>
+        {schedulerTouched && !scheduler && (
+          <div style={{ color: 'red', marginBottom: '10px' }}>Please select a scheduler.</div>
+        )}
 
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <input
@@ -114,8 +128,8 @@ function HomePage() {
             disabled={loading}
           />
           <div className="button-group">
-            <button className="button" onClick={handleUpload} disabled={loading}>Upload</button>
-            <button className="button" onClick={handleDownload} disabled={loading}>Download</button>
+            <button className="button" onClick={handleUpload} disabled={loading || !targetIp || !scheduler}>Upload</button>
+            <button className="button" onClick={handleDownload} disabled={loading || !targetIp || !scheduler}>Download</button>
           </div>
         </div>
       </div>
