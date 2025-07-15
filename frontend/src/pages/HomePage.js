@@ -9,6 +9,9 @@ function HomePage() {
   const [targetIp, setTargetIp] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [schedulerTouched, setSchedulerTouched] = useState(false);
+  const [recentIps, setRecentIps] = useState([]);
+  const [progress, setProgress] = useState(0);
+  const [protocol, setProtocol] = useState('TCP'); // TCP or MPTCP
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -24,7 +27,38 @@ function HomePage() {
         }
       })
       .catch(() => setSchedulers([]));
+    // Load recent IPs from localStorage
+    const saved = JSON.parse(localStorage.getItem('recentIps') || '[]');
+    setRecentIps(saved);
   }, []);
+
+  // Animate loading bar progress
+  useEffect(() => {
+    if (loading && !errorMsg) {
+      setProgress(0);
+      let start = Date.now();
+      const duration = 10000; // 10 seconds
+      const step = () => {
+        const elapsed = Date.now() - start;
+        const percent = Math.min(100, (elapsed / duration) * 100);
+        setProgress(percent);
+        if (percent < 100 && loading && !errorMsg) {
+          requestAnimationFrame(step);
+        }
+      };
+      requestAnimationFrame(step);
+    } else {
+      setProgress(0);
+    }
+  }, [loading, errorMsg]);
+
+  // Helper to save recent IPs
+  function saveRecentIp(ip) {
+    let updated = [ip, ...recentIps.filter(item => item !== ip)];
+    if (updated.length > 5) updated = updated.slice(0, 5);
+    setRecentIps(updated);
+    localStorage.setItem('recentIps', JSON.stringify(updated));
+  }
 
   const handleSelectChange = (e) => {
     setScheduler(e.target.value);
@@ -46,7 +80,7 @@ function HomePage() {
       const res = await fetch('http://localhost:8080/api/analysis/upload', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ip: targetIp, scheduler })
+        body: JSON.stringify({ ip: targetIp, scheduler, protocol })
       });
       const data = await res.json();
       if (data.error) {
@@ -56,6 +90,8 @@ function HomePage() {
         return;
       }
       localStorage.setItem('iperfResult', JSON.stringify(data));
+      localStorage.setItem('selectedScheduler', scheduler);
+      saveRecentIp(targetIp); // Save IP after success
       navigate('/analysis'); // Navigate to AnalysisPage
     } catch (err) {
       setLoading(false);
@@ -79,7 +115,7 @@ function HomePage() {
       const res = await fetch('http://localhost:8080/api/analysis/download', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ip: targetIp, scheduler })
+        body: JSON.stringify({ ip: targetIp, scheduler, protocol })
       });
       const data = await res.json();
       if (data.error) {
@@ -89,6 +125,8 @@ function HomePage() {
         return;
       }
       localStorage.setItem('iperfResult', JSON.stringify(data));
+      localStorage.setItem('selectedScheduler', scheduler);
+      saveRecentIp(targetIp); // Save IP after success
       navigate('/analysis');
     } catch (err) {
       setLoading(false);
@@ -99,6 +137,10 @@ function HomePage() {
 
   return (
     <div className="page">
+      {/* Overlay to block all interaction when loading */}
+      {loading && !errorMsg && (
+        <div className="global-loading-overlay"></div>
+      )}
       <div className="container" style={loading || errorMsg ? { filter: 'blur(4px)' } : {}}>
         <h2>Choose a Scheduler</h2>
 
@@ -121,12 +163,39 @@ function HomePage() {
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <input
             type="text"
+            list="recent-ip-list"
             placeholder="Enter target IP address"
             value={targetIp}
             onChange={e => setTargetIp(e.target.value)}
             style={{ marginBottom: '20px', padding: '10px', fontSize: '16px', width: '250px', textAlign: 'center' }}
             disabled={loading}
           />
+          <datalist id="recent-ip-list">
+            {recentIps.map(ip => <option key={ip} value={ip} />)}
+          </datalist>
+          {/* TCP/MPTCP Slider */}
+          <div className="protocol-toggle">
+            <label>
+              <input
+                type="radio"
+                name="protocol"
+                value="TCP"
+                checked={protocol === 'TCP'}
+                onChange={() => setProtocol('TCP')}
+                disabled={loading}
+              /> TCP
+            </label>
+            <label style={{ marginLeft: '20px' }}>
+              <input
+                type="radio"
+                name="protocol"
+                value="MPTCP"
+                checked={protocol === 'MPTCP'}
+                onChange={() => setProtocol('MPTCP')}
+                disabled={loading}
+              /> MPTCP
+            </label>
+          </div>
           <div className="button-group">
             <button className="button" onClick={handleUpload} disabled={loading || !targetIp || !scheduler}>Upload</button>
             <button className="button" onClick={handleDownload} disabled={loading || !targetIp || !scheduler}>Download</button>
@@ -134,45 +203,17 @@ function HomePage() {
         </div>
       </div>
       {loading && !errorMsg && (
-        <div style={{
-          textAlign: 'center',
-          marginTop: '-60px',
-          fontWeight: 'bold',
-          fontSize: '36px',
-          position: 'absolute',
-          left: 0,
-          right: 0,
-          top: '50%',
-          transform: 'translateY(-50%)',
-          zIndex: 10,
-          color: 'white',
-          textShadow: `
-            -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000,
-            0px 2px 0 #000, 2px 0px 0 #000, 0px -2px 0 #000, -2px 0px 0 #000
-          `
-        }}>
-          Please wait while we plot your graph
+        <div className="loading-bar-container">
+          <div className="loading-bar-label">Loading...</div>
+          <div className="loading-bar-outer">
+            <div className="loading-bar-inner" style={{ width: `${progress}%` }}></div>
+          </div>
         </div>
       )}
       {errorMsg && (
-        <div style={{
-          textAlign: 'center',
-          marginTop: '-60px',
-          fontWeight: 'bold',
-          fontSize: '28px',
-          position: 'absolute',
-          left: 0,
-          right: 0,
-          top: '50%',
-          transform: 'translateY(-50%)',
-          zIndex: 10,
-          color: 'white',
-          textShadow: `
-            -2px -2px 0 #b00, 2px -2px 0 #b00, -2px 2px 0 #b00, 2px 2px 0 #b00,
-            0px 2px 0 #b00, 2px 0px 0 #b00, 0px -2px 0 #b00, -2px 0px 0 #b00
-          `
-        }}>
-          {errorMsg}
+        <div className="error-message-container">
+          <span className="error-icon" aria-label="error">&#10060;</span>
+          <span className="error-message-text">{errorMsg}</span>
         </div>
       )}
     </div>

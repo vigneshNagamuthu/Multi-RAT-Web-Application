@@ -5,6 +5,46 @@ function DashboardPage() {
   const [modems, setModems] = useState([]);
   const [interfaces, setInterfaces] = useState([]);
   const [enabledModems, setEnabledModems] = useState({});
+  const [ispInfo, setIspInfo] = useState({}); // Store ISP info for each interface
+  const [loadingIsp, setLoadingIsp] = useState({}); // Track loading state
+
+  // Fetch ISP info for a specific IP
+  const fetchIspInfo = async (ip, interfaceName) => {
+    if (!ip || ip === '-' || ip === '127.0.0.1') return;
+    
+    setLoadingIsp(prev => ({ ...prev, [interfaceName]: true }));
+    
+    try {
+      const response = await fetch(`http://localhost:8080/api/isp-info/${ip}`);
+      const data = await response.json();
+      let isp = data.isp || 'Unknown ISP';
+      let error = data.error;
+      // Fallback: If ISP is N/A, Unknown, or error, fetch public ISP
+      if (!isp || isp === 'N/A' || isp === 'Unknown ISP' || error) {
+        const pubRes = await fetch('http://localhost:8080/api/isp-info');
+        const pubData = await pubRes.json();
+        isp = pubData.isp || 'Unknown ISP';
+        error = pubData.error;
+      }
+      setIspInfo(prev => ({
+        ...prev,
+        [interfaceName]: {
+          isp,
+          city: data.city || 'Unknown',
+          country: data.country || 'Unknown',
+          error
+        }
+      }));
+    } catch (error) {
+      console.error(`Failed to fetch ISP info for ${ip}:`, error);
+      setIspInfo(prev => ({
+        ...prev,
+        [interfaceName]: { error: 'Failed to fetch ISP info' }
+      }));
+    } finally {
+      setLoadingIsp(prev => ({ ...prev, [interfaceName]: false }));
+    }
+  };
 
   // Fetch modem settings and interface info
   useEffect(() => {
@@ -26,12 +66,18 @@ function DashboardPage() {
         const ifaceList = [];
         for (const key of Object.keys(json)) {
           if (json[key] && json[key].ip && json[key].interface) {
-            ifaceList.push({
+            const iface = {
               label: key,
               ip: json[key].ip,
               interface: json[key].interface,
               state: json[key].state
-            });
+            };
+            ifaceList.push(iface);
+            
+            // Fetch ISP info for each interface with a valid IP
+            if (iface.ip && iface.ip !== '-' && iface.ip !== '127.0.0.1') {
+              fetchIspInfo(iface.ip, iface.interface);
+            }
           }
         }
         setInterfaces(ifaceList);
@@ -79,6 +125,9 @@ function DashboardPage() {
           {interfaces.map((iface, i) => {
             const modem = getModemByInterface(iface.interface);
             const isEnabled = modem ? enabledModems[modem.interfaceName] : undefined;
+            const currentIspInfo = ispInfo[iface.interface];
+            const isLoadingIspInfo = loadingIsp[iface.interface];
+            
             return (
               <div
                 key={iface.interface}
@@ -112,6 +161,26 @@ function DashboardPage() {
                   <div className="detail-item">
                     <span className="detail-label">IP Address:</span>
                     <span className="detail-value">{iface.ip}</span>
+                  </div>
+                  
+                  {/* ISP Information Section */}
+                  <div className="detail-item">
+                    <span className="detail-label">ISP Provider:</span>
+                    <span className="detail-value isp-value">
+                      {isLoadingIspInfo ? (
+                        <span className="loading-text">Loading...</span>
+                      ) : currentIspInfo ? (
+                        currentIspInfo.error ? (
+                          <span className="error-text">Failed to load</span>
+                        ) : (
+                          currentIspInfo.isp
+                        )
+                      ) : iface.ip === '-' || iface.ip === '127.0.0.1' ? (
+                        <span className="no-ip-text">No public IP</span>
+                      ) : (
+                        <span className="loading-text">Loading...</span>
+                      )}
+                    </span>
                   </div>
                 </div>
               </div>

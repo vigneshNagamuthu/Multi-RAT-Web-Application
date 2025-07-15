@@ -1,7 +1,6 @@
 package com.example.demo.controller;
 
 import com.example.demo.model.TransferData;
-import com.example.demo.service.AnalysisService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,17 +14,6 @@ import java.util.concurrent.Future;
 @RequestMapping("/api")
 public class AnalysisController {
 
-    private final AnalysisService analysisService;
-
-    public AnalysisController(AnalysisService analysisService) {
-        this.analysisService = analysisService;
-    }
-
-    @GetMapping("/analysis")
-    public List<TransferData> getAnalysis(@RequestParam String type) {
-        System.out.println("🔥 AnalysisController HIT with type = " + type);
-        return analysisService.generateFakeData(type);
-    }
 
     @PostMapping("/analysis/upload")
     public @ResponseBody java.util.Map<String, Object> runIperfUpload(@RequestBody(required = false) Map<String, Object> body) throws Exception {
@@ -34,8 +22,9 @@ public class AnalysisController {
         }
         String ip = body.get("ip").toString();
         String scheduler = body.get("scheduler") != null ? body.get("scheduler").toString() : "default";
-        System.out.println("[IPERF] Upload test triggered for IP: " + ip + ", Scheduler: " + scheduler);
-        return runIperfCommand(false, ip, scheduler);
+        String protocol = body.get("protocol") != null ? body.get("protocol").toString() : "TCP";
+        System.out.println("[IPERF] Upload test triggered for IP: " + ip + ", Scheduler: " + scheduler + ", Protocol: " + protocol);
+        return runIperfCommand(false, ip, scheduler, protocol);
     }
 
     @PostMapping("/analysis/download")
@@ -45,26 +34,27 @@ public class AnalysisController {
         }
         String ip = body.get("ip").toString();
         String scheduler = body.get("scheduler") != null ? body.get("scheduler").toString() : "default";
-        System.out.println("[IPERF] Download test triggered for IP: " + ip + ", Scheduler: " + scheduler);
-        return runIperfCommand(true, ip, scheduler);
+        String protocol = body.get("protocol") != null ? body.get("protocol").toString() : "TCP";
+        System.out.println("[IPERF] Download test triggered for IP: " + ip + ", Scheduler: " + scheduler + ", Protocol: " + protocol);
+        return runIperfCommand(true, ip, scheduler, protocol);
     }
 
-    private java.util.Map<String, Object> runIperfCommand(boolean reverse, String ip, String scheduler) throws Exception {
+    private java.util.Map<String, Object> runIperfCommand(boolean reverse, String ip, String scheduler, String protocol) throws Exception {
         // Set the scheduler first
         java.util.List<String> setSchedulerCmd = java.util.Arrays.asList("sudo", "sysctl", "-w", "net.mptcp.scheduler=" + scheduler);
         System.out.println("[MPTCP] Setting scheduler: " + String.join(" ", setSchedulerCmd));
         ProcessBuilder setSchedulerPb = new ProcessBuilder(setSchedulerCmd);
         setSchedulerPb.redirectErrorStream(true);
         Process setSchedulerProcess = setSchedulerPb.start();
-        setSchedulerProcess.waitFor(3, TimeUnit.SECONDS);
+        setSchedulerProcess.waitFor(3, java.util.concurrent.TimeUnit.SECONDS);
 
         // Prepare to sample /proc/net/dev
         java.util.List<String> interfaces = getActiveInterfaces();
         int sampleIntervalMs = 1000;
         int testDurationSec = 10;
         java.util.List<java.util.Map<String, Object>> samples = new java.util.ArrayList<>();
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        Future<?> samplingTask = executor.submit(() -> {
+        java.util.concurrent.ExecutorService executor = java.util.concurrent.Executors.newSingleThreadExecutor();
+        java.util.concurrent.Future<?> samplingTask = executor.submit(() -> {
             try {
                 java.util.Map<String, Long> prevRx = new java.util.HashMap<>();
                 java.util.Map<String, Long> prevTx = new java.util.HashMap<>();
@@ -102,8 +92,13 @@ public class AnalysisController {
             }
         });
 
-        // Build mptcpize iperf3 command
-        java.util.List<String> command = new java.util.ArrayList<>(java.util.Arrays.asList("mptcpize", "run", "iperf3", "-c", ip, "-t", String.valueOf(testDurationSec)));
+        // Build iperf3 command based on protocol
+        java.util.List<String> command;
+        if ("MPTCP".equalsIgnoreCase(protocol)) {
+            command = new java.util.ArrayList<>(java.util.Arrays.asList("mptcpize", "run", "iperf3", "-c", ip, "-t", String.valueOf(testDurationSec)));
+        } else {
+            command = new java.util.ArrayList<>(java.util.Arrays.asList("iperf3", "-c", ip, "-t", String.valueOf(testDurationSec)));
+        }
         if (reverse) command.add("-R");
         System.out.println("[IPERF] Running command: " + String.join(" ", command));
         ProcessBuilder pb = new ProcessBuilder(command);
@@ -112,7 +107,7 @@ public class AnalysisController {
         java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(process.getInputStream()));
         StringBuilder output = new StringBuilder();
         String line;
-        boolean finished = process.waitFor(testDurationSec + 2, TimeUnit.SECONDS);
+        boolean finished = process.waitFor(testDurationSec + 2, java.util.concurrent.TimeUnit.SECONDS);
         if (!finished) {
             process.destroyForcibly();
             System.out.println("[IPERF] Process timed out and was killed.");

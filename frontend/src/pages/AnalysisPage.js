@@ -19,6 +19,10 @@ export default function AnalysisPage() {
 
   useEffect(() => {
     const iperfResult = localStorage.getItem('iperfResult');
+    const savedScheduler = localStorage.getItem('selectedScheduler');
+    if (savedScheduler) {
+      setSchedulerType(savedScheduler);
+    }
     if (iperfResult) {
       const parsed = JSON.parse(iperfResult);
       const samples = parsed.samples;
