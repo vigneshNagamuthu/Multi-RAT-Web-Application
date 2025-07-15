@@ -144,6 +144,57 @@ public class IspInfoController {
         
         return result;
     }
+
+    @GetMapping("/api/isp-info/all")
+    public Map<String, Object> getAllInterfacesIspInfo() {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            // Get all active interfaces (reuse logic from AnalysisController)
+            java.util.List<String> interfaces = new java.util.ArrayList<>();
+            try (java.io.BufferedReader br = new java.io.BufferedReader(new java.io.FileReader("/proc/net/dev"))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    line = line.trim();
+                    if (line.contains(":")) {
+                        String iface = line.split(":")[0].trim();
+                        if (!iface.equals("lo")) {
+                            interfaces.add(iface);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                result.put("error", "Failed to enumerate interfaces: " + e.getMessage());
+                return result;
+            }
+            // For each interface, run curl --interface <iface> ipinfo.io
+            for (String iface : interfaces) {
+                try {
+                    ProcessBuilder pb = new ProcessBuilder(
+                        "curl", "--interface", iface, "--max-time", "5", "-s", "ipinfo.io"
+                    );
+                    pb.redirectErrorStream(true);
+                    Process process = pb.start();
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                    StringBuilder response = new StringBuilder();
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        response.append(line);
+                    }
+                    reader.close();
+                    process.waitFor();
+                    String json = response.toString();
+                    String org = extractJsonValue(json, "org");
+                    String ip = extractJsonValue(json, "ip");
+                    result.put(iface, Map.of("ip", ip, "org", org));
+                } catch (Exception e) {
+                    result.put(iface, Map.of("error", e.getMessage()));
+                }
+            }
+        } catch (Exception e) {
+            result.put("error", e.getMessage());
+        }
+        return result;
+    }
     
     // Simple JSON value extractor (basic implementation)
     private String extractJsonValue(String json, String key) {
