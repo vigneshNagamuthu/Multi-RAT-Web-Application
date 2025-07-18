@@ -165,7 +165,7 @@ function DashboardPage() {
                   
                   {/* ISP Information Section */}
                   <div className="detail-item">
-                    <span className="detail-label">ISP Provider:</span>
+                    <span className="detail-label">Service Provider:</span>
                     <span className="detail-value isp-value">
                       {isLoadingIspInfo ? (
                         <span className="loading-text">Loading...</span>
