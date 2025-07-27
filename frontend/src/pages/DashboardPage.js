@@ -21,9 +21,9 @@ function DashboardPage() {
       let error = data.error;
       // Fallback: If ISP is N/A, Unknown, or error, fetch public ISP
       if (!isp || isp === 'N/A' || isp === 'Unknown ISP' || error) {
-        const pubRes = await fetch('http://localhost:8080/api/isp-info');
+        const pubRes = await fetch('http://localhost:8080/api/isp-info/all');
         const pubData = await pubRes.json();
-        isp = pubData.isp || 'Unknown ISP';
+        isp   = pubData[interfaceName]?.isp || 'Unknown ISP';
         error = pubData.error;
       }
       setIspInfo(prev => ({
