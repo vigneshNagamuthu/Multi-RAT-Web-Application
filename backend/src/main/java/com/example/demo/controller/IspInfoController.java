@@ -2,6 +2,7 @@ package com.example.demo.controller;
 
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import java.io.FileReader;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -11,6 +12,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
 
 @CrossOrigin(origins = "http://localhost:3000")
 @RestController
@@ -145,56 +148,86 @@ public class IspInfoController {
         return result;
     }
 
-    @GetMapping("/api/isp-info/all")
-    public Map<String, Object> getAllInterfacesIspInfo() {
-        Map<String, Object> result = new HashMap<>();
-        try {
-            // Get all active interfaces (reuse logic from AnalysisController)
-            java.util.List<String> interfaces = new java.util.ArrayList<>();
-            try (java.io.BufferedReader br = new java.io.BufferedReader(new java.io.FileReader("/proc/net/dev"))) {
-                String line;
-                while ((line = br.readLine()) != null) {
-                    line = line.trim();
-                    if (line.contains(":")) {
-                        String iface = line.split(":")[0].trim();
-                        if (!iface.equals("lo")) {
-                            interfaces.add(iface);
-                        }
-                    }
-                }
-            } catch (Exception e) {
-                result.put("error", "Failed to enumerate interfaces: " + e.getMessage());
-                return result;
-            }
-            // For each interface, run curl --interface <iface> ipinfo.io
-            for (String iface : interfaces) {
-                try {
-                    ProcessBuilder pb = new ProcessBuilder(
-                        "curl", "--interface", iface, "--max-time", "5", "-s", "ipinfo.io"
-                    );
-                    pb.redirectErrorStream(true);
-                    Process process = pb.start();
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-                    StringBuilder response = new StringBuilder();
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        response.append(line);
-                    }
-                    reader.close();
-                    process.waitFor();
-                    String json = response.toString();
-                    String org = extractJsonValue(json, "org");
-                    String ip = extractJsonValue(json, "ip");
-                    result.put(iface, Map.of("ip", ip, "org", org));
-                } catch (Exception e) {
-                    result.put(iface, Map.of("error", e.getMessage()));
-                }
-            }
-        } catch (Exception e) {
-            result.put("error", e.getMessage());
+@GetMapping("/api/isp-info/all")
+public Map<String, Object> getAllInterfacesIspInfo() {
+    Map<String, Object> result = new HashMap<>();
+
+    // 1) enumerate all non-loopback interfaces
+    List<String> interfaces = new ArrayList<>();
+    try (BufferedReader br = new BufferedReader(new FileReader("/proc/net/dev"))) {
+        String line;
+        while ((line = br.readLine()) != null) {
+            if (!line.contains(":")) continue;
+            String iface = line.split(":")[0].trim();
+            if (!"lo".equals(iface)) interfaces.add(iface);
         }
+    } catch (Exception e) {
+        result.put("error", "Failed to enumerate interfaces: " + e.getMessage());
         return result;
     }
+
+    for (String iface : interfaces) {
+        try {
+            // --- Step A: get the public IP on this interface ---
+            ProcessBuilder pbIp = new ProcessBuilder(
+                "curl", "--interface", iface,
+                "--max-time", "10", "-s",
+                "https://ipinfo.io/ip"
+            );
+            pbIp.redirectErrorStream(true);
+            Process procIp = pbIp.start();
+            BufferedReader ipReader = new BufferedReader(
+                new InputStreamReader(procIp.getInputStream())
+            );
+            String ip = ipReader.readLine();
+            ipReader.close();
+            procIp.waitFor();
+
+            if (ip == null || ip.isBlank()) {
+                result.put(iface, Map.of("error", "Could not retrieve IP"));
+                continue;
+            }
+            ip = ip.trim();
+
+            // --- Step B: fetch ISP info by IP, not by source address ---
+            URL infoUrl = new URL("https://ipinfo.io/" + ip + "/json");
+            HttpURLConnection conn = (HttpURLConnection) infoUrl.openConnection();
+            conn.setRequestMethod("GET");
+            conn.setConnectTimeout(5_000);
+            conn.setReadTimeout(5_000);
+
+            BufferedReader infoReader = new BufferedReader(
+                new InputStreamReader(conn.getInputStream())
+            );
+            StringBuilder sb = new StringBuilder();
+            String infoLine;
+            while ((infoLine = infoReader.readLine()) != null) {
+                sb.append(infoLine);
+            }
+            infoReader.close();
+
+            String json = sb.toString();
+            String org  = extractJsonValue(json, "org");
+            String city = extractJsonValue(json, "city");
+            String region  = extractJsonValue(json, "region");
+            String country = extractJsonValue(json, "country");
+
+            result.put(iface, Map.of(
+                "ip",      ip,
+                "isp",     org,
+                "city",    city,
+                "region",  region,
+                "country", country,
+                "success", true
+            ));
+        } catch (Exception e) {
+            result.put(iface, Map.of("error", e.getMessage()));
+        }
+    }
+
+    return result;
+}
+
     
     // Simple JSON value extractor (basic implementation)
     private String extractJsonValue(String json, String key) {
