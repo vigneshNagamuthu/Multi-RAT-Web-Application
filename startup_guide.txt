@@ -4,7 +4,8 @@ If your system requires a sudo password, please edit the visudo file by:
     sudo visudo
 2) add the following lines at the end of the file:
     @includedir /etc/sudoers.d
-    <usrname> ALL=(ALL) NOPASSWD: /usr/sbin/ip link set *
+    <username>    ALL=(ALL) NOPASSWD: /usr/sbin/ip link set *
+    <username>    ALL=(ALL) NOPASSWD: /usr/sbin/sysctl *
 
 \\How to start web app locally//
 1) open terminal and go to /backend directory
