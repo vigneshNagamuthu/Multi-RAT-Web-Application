@@ -2,10 +2,10 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
 import HomePage from './pages/HomePage';
-import Dashboard from './pages/DashboardPage';
-import AnalysisPage from './pages/AnalysisPage';
 import LoginPage from './pages/LoginPage';
-import PrivateRoute from './components/PrivateRoute'; // ✅ Add this import
+import PrivateRoute from './components/PrivateRoute';
+import VideoStreamPage from './pages/VideoStreamPage';
+import SensorPage from './pages/SensorPage';
 
 function App() {
   return (
@@ -22,18 +22,18 @@ function App() {
             }
           />
           <Route
-            path="dashboard"
+            path="video"
             element={
               <PrivateRoute>
-                <Dashboard />
+                <VideoStreamPage />
               </PrivateRoute>
             }
           />
           <Route
-            path="analysis"
+            path="sensor"
             element={
               <PrivateRoute>
-                <AnalysisPage />
+                <SensorPage />
               </PrivateRoute>
             }
           />

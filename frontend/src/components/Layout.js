@@ -16,8 +16,8 @@ export default function Layout() {
         <img src={logoImg} alt="Logo" style={styles.logo} />
         <div style={styles.navLinks}>
           <span onClick={() => navigate('/home')}>Home</span>
-          <span onClick={() => navigate('/dashboard')}>Dashboard</span>
-          <span onClick={() => navigate('/analysis')}>Analysis</span>
+          <span onClick={() => navigate('/video')}>Video</span>
+          <span onClick={() => navigate('/sensor')}>Sensor</span>
           <span onClick={handleLogout} style={styles.logout}>Logout</span>
         </div>
       </nav>

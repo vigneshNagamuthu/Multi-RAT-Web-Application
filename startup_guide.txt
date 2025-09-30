@@ -8,16 +8,44 @@ If your system requires a sudo password, please edit the visudo file by:
     <username>    ALL=(ALL) NOPASSWD: /usr/sbin/sysctl *
 
 \\How to start web app locally//
+Prerequisites:
+ - Java 21 JDK installed (verify with: java -version and javac -version, both should show 21.x)
+ - Maven installed (verify with: mvn -v)
+ - Node.js + npm installed (verify with: node -v and npm -v)
+   If missing, install via nvm: curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+   Then: export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" && nvm install --lts
+
+Backend steps:
 1) open terminal and go to /backend directory
-2) install maven
-3) then type, 
+2) (optional first time) mvn -q -e dependency:go-offline
+3) build the project:
     mvn clean install
-4) next type,
+4) run the backend:
     mvn spring-boot:run
-5) this will start the backend of the web app
+   (Alternatively run the jar after build: java -jar target/backend-0.0.1-SNAPSHOT.jar)
+5) backend is running on default port (check console for 'Started BackendApplication')
+
+Frontend steps:
 6) open a new terminal and go to /frontend directory
-7) intall npm
-8) then,
-    npm install react-router-dom
-9) next,
+7) install dependencies (first time only):
+    npm install
+   (react-router-dom already in dependencies if package.json lists it; otherwise install explicitly.)
+8) start the frontend dev server:
     npm start
+9) open browser at: http://localhost:3000/
+
+Troubleshooting:
+ - If you see 'release version XX not supported', ensure java -version is 21+.
+ - If port conflicts occur, export SERVER_PORT=8081 before running spring-boot:run.
+ - Clean build issues: mvn clean; delete ~/.m2/repository if corruption suspected.
+ - Video not showing: Check browser camera permission and WS console logs.
+ - Sensor RTT stays null: Ensure /sensor WebSocket connected (network tab) and click Ping again.
+
+New Prototype Pages:
+ - /video : Sends webcam frames (JPEG over WebSocket) and displays rebroadcast stream.
+ - /sensor : Sends mock sensor JSON messages and measures ping RTT.
+
+Upcoming (planned) Enhancements:
+ - Bind video & sensor channels to distinct ports for hybrid scheduler evaluation.
+ - Add basic metrics aggregation endpoint (avg frame interval, dropped frames, sensor jitter).
+ - Optional archiving of legacy iperf / ISP endpoints when scheduler integration returns.
