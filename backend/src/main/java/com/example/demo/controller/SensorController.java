@@ -48,7 +48,8 @@ public class SensorController {
     public ResponseEntity<Map<String, Object>> getStatus() {
         Map<String, Object> response = new HashMap<>();
         response.put("scheduler", "Redundant");
-        response.put("port", 5000);
+        response.put("port", iperfService.getPort());
+        response.put("server", iperfService.getServerIp());
         response.put("currentSequence", dataGenerator.getCurrentSequence());
         response.put("active", true);
         response.put("iperfRunning", iperfService.isRunning());
@@ -56,36 +57,29 @@ public class SensorController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Start iperf3 traffic
-     */
     @PostMapping("/iperf/start")
     public ResponseEntity<Map<String, Object>> startIPerf(
-            @RequestParam(defaultValue = "127.0.0.1") String server,
-            @RequestParam(defaultValue = "5000") int port,
             @RequestParam(defaultValue = "60") int duration) {
         
         Map<String, Object> response = new HashMap<>();
         
-        boolean started = iperfService.startIPerf(server, port, duration);
+        boolean started = iperfService.startIPerf(duration);
         
         if (started) {
             response.put("status", "success");
-            response.put("message", "iperf3 traffic started");
-            response.put("server", server);
-            response.put("port", port);
+            response.put("message", "iperf3 traffic started to AWS server");
+            response.put("server", iperfService.getServerIp());
+            response.put("port", iperfService.getPort());
             response.put("duration", duration);
+            response.put("scheduler", "Redundant");
             return ResponseEntity.ok(response);
         } else {
             response.put("status", "error");
-            response.put("message", "Failed to start iperf3 (already running or iperf3 not installed)");
+            response.put("message", "Failed to start iperf3. Make sure iperf3 is installed.");
             return ResponseEntity.badRequest().body(response);
         }
     }
 
-    /**
-     * Stop iperf3 traffic
-     */
     @PostMapping("/iperf/stop")
     public ResponseEntity<Map<String, String>> stopIPerf() {
         iperfService.stopIPerf();
