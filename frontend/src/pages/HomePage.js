@@ -1,223 +1,141 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import './HomePage.css';
 
-function HomePage() {
-  const [scheduler, setScheduler] = useState('');
-  const [schedulers, setSchedulers] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [targetIp, setTargetIp] = useState('');
-  const [errorMsg, setErrorMsg] = useState('');
-  const [schedulerTouched, setSchedulerTouched] = useState(false);
-  const [recentIps, setRecentIps] = useState([]);
-  const [progress, setProgress] = useState(0);
-  const [protocol, setProtocol] = useState('TCP'); // TCP or MPTCP
-  const navigate = useNavigate();
+export default function HomePage() {
+  const [config, setConfig] = useState(null);
 
   useEffect(() => {
-    fetch('http://localhost:8080/api/schedulers')
+    fetch('http://localhost:8080/api/scheduler/config')
       .then(res => res.json())
-      .then(data => {
-        if (Array.isArray(data)) {
-          setSchedulers(data);
-        } else if (typeof data === 'string') {
-          setSchedulers(data.trim().split(/\s+/));
-        } else {
-          setSchedulers([]);
-        }
-      })
-      .catch(() => setSchedulers([]));
-    // Load recent IPs from localStorage
-    const saved = JSON.parse(localStorage.getItem('recentIps') || '[]');
-    setRecentIps(saved);
+      .then(data => setConfig(data))
+      .catch(err => console.error('Error fetching config:', err));
   }, []);
 
-  // Animate loading bar progress
-  useEffect(() => {
-    if (loading && !errorMsg) {
-      setProgress(0);
-      let start = Date.now();
-      const duration = 10000; // 10 seconds
-      const step = () => {
-        const elapsed = Date.now() - start;
-        const percent = Math.min(100, (elapsed / duration) * 100);
-        setProgress(percent);
-        if (percent < 100 && loading && !errorMsg) {
-          requestAnimationFrame(step);
-        }
-      };
-      requestAnimationFrame(step);
-    } else {
-      setProgress(0);
-    }
-  }, [loading, errorMsg]);
-
-  // Helper to save recent IPs
-  function saveRecentIp(ip) {
-    let updated = [ip, ...recentIps.filter(item => item !== ip)];
-    if (updated.length > 5) updated = updated.slice(0, 5);
-    setRecentIps(updated);
-    localStorage.setItem('recentIps', JSON.stringify(updated));
-  }
-
-  const handleSelectChange = (e) => {
-    setScheduler(e.target.value);
-    setSchedulerTouched(true);
-  };
-
-  const handleUpload = async () => {
-    if (!targetIp) {
-      alert('Please enter a target IP address.');
-      return;
-    }
-    if (!scheduler) {
-      alert('Please select a scheduler.');
-      return;
-    }
-    try {
-      setLoading(true);
-      setErrorMsg('');
-      const res = await fetch('http://localhost:8080/api/analysis/upload', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ip: targetIp, scheduler, protocol })
-      });
-      const data = await res.json();
-      if (data.error) {
-        setLoading(false);
-        setErrorMsg('Error: check IP or network Iperf3 compatibility');
-        setTimeout(() => setErrorMsg(''), 5000);
-        return;
-      }
-      localStorage.setItem('iperfResult', JSON.stringify(data));
-      localStorage.setItem('selectedScheduler', scheduler);
-      saveRecentIp(targetIp); // Save IP after success
-      navigate('/analysis'); // Navigate to AnalysisPage
-    } catch (err) {
-      setLoading(false);
-      setErrorMsg('Error: check IP or network Iperf3 compatibility');
-      setTimeout(() => setErrorMsg(''), 5000);
-    }
-  };
-
-  const handleDownload = async () => {
-    if (!targetIp) {
-      alert('Please enter a target IP address.');
-      return;
-    }
-    if (!scheduler) {
-      alert('Please select a scheduler.');
-      return;
-    }
-    try {
-      setLoading(true);
-      setErrorMsg('');
-      const res = await fetch('http://localhost:8080/api/analysis/download', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ip: targetIp, scheduler, protocol })
-      });
-      const data = await res.json();
-      if (data.error) {
-        setLoading(false);
-        setErrorMsg('Error: check IP or network Iperf3 compatibility');
-        setTimeout(() => setErrorMsg(''), 5000);
-        return;
-      }
-      localStorage.setItem('iperfResult', JSON.stringify(data));
-      localStorage.setItem('selectedScheduler', scheduler);
-      saveRecentIp(targetIp); // Save IP after success
-      navigate('/analysis');
-    } catch (err) {
-      setLoading(false);
-      setErrorMsg('Error: check IP or network Iperf3 compatibility');
-      setTimeout(() => setErrorMsg(''), 5000);
-    }
-  };
-
   return (
-    <div className="page">
-      {/* Overlay to block all interaction when loading */}
-      {loading && !errorMsg && (
-        <div className="global-loading-overlay"></div>
-      )}
-      <div className="container" style={loading || errorMsg ? { filter: 'blur(4px)' } : {}}>
-        <h2>Choose a Scheduler</h2>
+    <div className="home-page">
+      <div className="home-container">
+        <div className="home-header">
+          <h1>Hybrid MPTCP Scheduler</h1>
+          <p>Port-Based Scheduler Implementation</p>
+          
+          {config && (
+            <div className="config-info">
+              ✨ {config.description}
+            </div>
+          )}
+        </div>
 
-        <label htmlFor="scheduler">Scheduler Type</label>
-        <select
-          id="scheduler"
-          value={scheduler}
-          onChange={handleSelectChange}
-          onBlur={() => setSchedulerTouched(true)}
-        >
-          <option value="">Select</option>
-          {schedulers.map(s => (
-            <option key={s} value={s}>{s}</option>
-          ))}
-        </select>
-        {schedulerTouched && !scheduler && (
-          <div style={{ color: 'red', marginBottom: '10px' }}>Please select a scheduler.</div>
-        )}
+        <div className="feature-cards">
+          {/* Streaming Card */}
+          <Link to="/streaming" className="feature-card streaming">
+            <div className="feature-icon-circle">
+              📹
+            </div>
+            
+            <h2>Video Streaming</h2>
+            <p>
+              Real-time video streaming with LRTT scheduler for optimal latency and performance on port 6060
+            </p>
+            
+            <ul className="feature-list">
+              <li>
+                <span className="checkmark">✓</span>
+                <span>Lowest RTT First selection</span>
+              </li>
+              <li>
+                <span className="checkmark">✓</span>
+                <span>Real-time latency monitoring</span>
+              </li>
+              <li>
+                <span className="checkmark">✓</span>
+                <span>Camera stream to MPTCP server</span>
+              </li>
+              <li>
+                <span className="checkmark">✓</span>
+                <span>Live FPS & packet loss metrics</span>
+              </li>
+            </ul>
 
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <input
-            type="text"
-            list="recent-ip-list"
-            placeholder="Enter target IP address"
-            value={targetIp}
-            onChange={e => setTargetIp(e.target.value)}
-            style={{ marginBottom: '20px', padding: '10px', fontSize: '16px', width: '250px', textAlign: 'center' }}
-            disabled={loading}
-          />
-          <datalist id="recent-ip-list">
-            {recentIps.map(ip => <option key={ip} value={ip} />)}
-          </datalist>
-          {/* TCP/MPTCP Slider */}
-          <div className="protocol-toggle">
-            <label>
-              <input
-                type="radio"
-                name="protocol"
-                value="TCP"
-                checked={protocol === 'TCP'}
-                onChange={() => setProtocol('TCP')}
-                disabled={loading}
-              /> TCP
-            </label>
-            <label style={{ marginLeft: '20px' }}>
-              <input
-                type="radio"
-                name="protocol"
-                value="MPTCP"
-                checked={protocol === 'MPTCP'}
-                onChange={() => setProtocol('MPTCP')}
-                disabled={loading}
-              /> MPTCP
-            </label>
+            <div className="feature-badge-container">
+              <span className="feature-badge streaming">
+                🚀 Port 6060 - LRTT
+              </span>
+            </div>
+          </Link>
+
+          {/* Sensor Card */}
+          <Link to="/sensor" className="feature-card sensor">
+            <div className="feature-icon-circle">
+              📡
+            </div>
+            
+            <h2>IoT Sensor Data</h2>
+            <p>
+              High-reliability IoT data transmission with Redundant scheduler for mission-critical applications on port 5000
+            </p>
+            
+            <ul className="feature-list">
+              <li>
+                <span className="checkmark">✓</span>
+                <span>High reliability transmission</span>
+              </li>
+              <li>
+                <span className="checkmark">✓</span>
+                <span>Packet loss visualization</span>
+              </li>
+              <li>
+                <span className="checkmark">✓</span>
+                <span>Real-time sequence monitoring</span>
+              </li>
+              <li>
+                <span className="checkmark">✓</span>
+                <span>Loss rate statistics</span>
+              </li>
+            </ul>
+
+            <div className="feature-badge-container">
+              <span className="feature-badge sensor">
+                🛡️ Port 5000 - Redundant
+              </span>
+            </div>
+          </Link>
+        </div>
+
+        {/* Technical Architecture */}
+        <div className="tech-section">
+          <h3>🔧 Technical Architecture</h3>
+          
+          <div className="tech-grid">
+            <div className="tech-item">
+              <h4>LRTT Scheduler (Port 6060)</h4>
+              <ul>
+                <li>Selects subflow with lowest RTT</li>
+                <li>Optimized for latency-sensitive apps</li>
+                <li>Dynamic path switching</li>
+                <li>Real-time metric monitoring</li>
+              </ul>
+            </div>
+            
+            <div className="tech-item">
+              <h4>Redundant Scheduler (Port 5000)</h4>
+              <ul>
+                <li>Sends packets on multiple paths</li>
+                <li>High reliability for IoT data</li>
+                <li>Tolerates packet loss</li>
+                <li>Sequence validation</li>
+              </ul>
+            </div>
           </div>
-          <div className="button-group">
-            <button className="button" onClick={handleUpload} disabled={loading || !targetIp || !scheduler}>Upload</button>
-            <button className="button" onClick={handleDownload} disabled={loading || !targetIp || !scheduler}>Download</button>
-          </div>
+        </div>
+
+        {/* WebSocket Info */}
+        <div className="websocket-info">
+          <p>WebSocket Endpoints:</p>
+          <code>ws://localhost:8080/ws/streaming</code>
+          <code>ws://localhost:8080/ws/sensor</code>
         </div>
       </div>
-      {loading && !errorMsg && (
-        <div className="loading-bar-container">
-          <div className="loading-bar-label">Loading...</div>
-          <div className="loading-bar-outer">
-            <div className="loading-bar-inner" style={{ width: `${progress}%` }}></div>
-          </div>
-        </div>
-      )}
-      {errorMsg && (
-        <div className="error-message-container">
-          <span className="error-icon" aria-label="error">&#10060;</span>
-          <span className="error-message-text">{errorMsg}</span>
-        </div>
-      )}
     </div>
   );
 }
-
-export default HomePage;

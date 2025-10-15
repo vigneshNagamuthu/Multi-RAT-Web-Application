@@ -1,0 +1,126 @@
+.metrics-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Metrics Grid */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+/* Metric Card */
+.metric-card {
+  padding: 28px 24px;
+  border-radius: 16px;
+  color: white;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.metric-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  transition: transform 0.5s ease;
+}
+
+.metric-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.2);
+}
+
+.metric-card:hover::before {
+  transform: translate(-25%, -25%);
+}
+
+.metric-card.latency {
+  background: linear-gradient(135deg, #667eea 0%, #4299e1 100%);
+}
+
+.metric-card.packet-loss {
+  background: linear-gradient(135deg, #9f7aea 0%, #805ad5 100%);
+}
+
+.metric-card.fps {
+  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+}
+
+.metric-card.scheduler {
+  background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+}
+
+/* Metric Content */
+.metric-label {
+  font-size: 14px;
+  opacity: 0.95;
+  margin-bottom: 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.metric-value {
+  font-size: 44px;
+  font-weight: 800;
+  margin: 12px 0;
+  letter-spacing: -2px;
+  line-height: 1;
+}
+
+.metric-unit {
+  font-size: 14px;
+  opacity: 0.9;
+  margin-top: 8px;
+  font-weight: 500;
+}
+
+/* Metrics Footer */
+.metrics-footer {
+  background: linear-gradient(135deg, #f7fafc, #edf2f7);
+  padding: 18px 24px;
+  border-radius: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  color: #4a5568;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.metrics-footer-left {
+  font-weight: 500;
+}
+
+/* Live Indicator */
+.live-indicator {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.live-dot {
+  width: 10px;
+  height: 10px;
+  background: #48bb78;
+  border-radius: 50%;
+  box-shadow: 0 0 0 3px rgba(72, 187, 120, 0.2);
+  animation: pulse 2s infinite;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+}
