@@ -12,6 +12,7 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -25,6 +26,7 @@ public class StreamingWebSocketHandler extends TextWebSocketHandler {
     private final ObjectMapper objectMapper;
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     private boolean isSchedulerStarted = false;
+    private boolean useRealMetrics = false;
 
     public StreamingWebSocketHandler(DummyDataGenerator dataGenerator) {
         this.dataGenerator = dataGenerator;
@@ -51,25 +53,53 @@ public class StreamingWebSocketHandler extends TextWebSocketHandler {
 
     private void startSendingMetrics() {
         scheduler.scheduleAtFixedRate(() -> {
-            if (sessions.isEmpty()) {
-                return;
+            if (sessions.isEmpty() || useRealMetrics) {
+                return; // Skip dummy data if using real metrics
             }
 
             StreamMetrics metrics = dataGenerator.generateStreamMetrics();
             
             try {
                 String json = objectMapper.writeValueAsString(metrics);
-                
-                synchronized (sessions) {
-                    for (WebSocketSession session : sessions) {
-                        if (session.isOpen()) {
-                            session.sendMessage(new TextMessage(json));
-                        }
-                    }
-                }
-            } catch (IOException e) {
+                sendToAllSessions(json);
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }, 0, 1, TimeUnit.SECONDS);
+    }
+
+    /**
+     * Send real metrics from FFmpeg (called by VideoStreamingService)
+     */
+    public void sendMetricsToClients(Map<String, Object> metrics) {
+        useRealMetrics = true;
+        
+        try {
+            String json = objectMapper.writeValueAsString(metrics);
+            sendToAllSessions(json);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Stop real metrics and go back to dummy data
+     */
+    public void stopRealMetrics() {
+        useRealMetrics = false;
+    }
+
+    private void sendToAllSessions(String message) {
+        synchronized (sessions) {
+            for (WebSocketSession session : sessions) {
+                if (session.isOpen()) {
+                    try {
+                        session.sendMessage(new TextMessage(message));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
     }
 }

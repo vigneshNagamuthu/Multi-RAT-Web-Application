@@ -68,36 +68,6 @@
   position: relative;
 }
 
-.video-overlay {
-  position: absolute;
-  top: 16px;
-  left: 16px;
-  z-index: 10;
-}
-
-.live-badge {
-  background: rgba(220, 38, 38, 0.95);
-  color: white;
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 14px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  animation: pulse 2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.8;
-  }
-}
-
 .video-placeholder,
 .video-placeholder-offline {
   width: 100%;
@@ -247,4 +217,22 @@
   .content-grid-full {
     grid-template-columns: 1fr;
   }
+}
+
+/* Additional Loading States */
+.video-status-badge.loading {
+  background: linear-gradient(135deg, #fef3c7, #fbbf24);
+  color: #78350f;
+  animation: pulse 2s infinite;
+}
+
+.loading-subtext,
+.offline-subtext {
+  font-size: 13px;
+  color: #a0aec0;
+  margin-top: 8px;
+}
+
+.video-loading-overlay p {
+  margin: 8px 0;
 }

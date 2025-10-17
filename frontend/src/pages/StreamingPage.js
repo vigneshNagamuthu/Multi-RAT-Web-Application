@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import Hls from 'hls.js';
 import MetricsDisplay from '../components/streaming/MetricsDisplay';
 import useStreamingWebSocket from '../hooks/useStreamingWebSocket';
 import './StreamingPage.css';
@@ -7,8 +8,18 @@ export default function StreamingPage() {
   const { metrics, isConnected, error } = useStreamingWebSocket('ws://localhost:8080/ws/streaming');
   const [streaming, setStreaming] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [serverInfo] = useState({ server: '54.169.114.206', port: 6060 });
+  const [videoLoaded, setVideoLoaded] = useState(false);
+  const [videoError, setVideoError] = useState(null);
+  
+  // Server configuration
+  const serverInfo = { 
+    server: '54.169.114.206', 
+    inputPort: 6060,    // Port for sending stream TO AWS
+    outputPort: 6061    // Port for receiving HLS FROM AWS
+  };
+  
   const videoRef = useRef(null);
+  const hlsRef = useRef(null);
 
   useEffect(() => {
     // Check streaming status on load
@@ -16,12 +27,99 @@ export default function StreamingPage() {
       .then(res => res.json())
       .then(data => {
         setStreaming(data.isStreaming);
+        if (data.isStreaming) {
+          setTimeout(() => loadVideo(), 2000);
+        }
       })
       .catch(err => console.error('Error fetching status:', err));
+
+    // Cleanup on unmount
+    return () => {
+      if (hlsRef.current) {
+        hlsRef.current.destroy();
+      }
+    };
   }, []);
+
+  const loadVideo = () => {
+    const video = videoRef.current;
+    const hlsUrl = `http://${serverInfo.server}:${serverInfo.outputPort}/hls/stream.m3u8`;
+
+    console.log('📺 Loading HLS stream from AWS:', hlsUrl);
+
+    if (Hls.isSupported()) {
+      // Use HLS.js for browsers that don't natively support HLS
+      const hls = new Hls({
+        enableWorker: true,
+        lowLatencyMode: true,
+        maxBufferLength: 10,
+        maxMaxBufferLength: 20,
+        manifestLoadingTimeOut: 10000,
+        manifestLoadingMaxRetry: 4,
+        levelLoadingTimeOut: 10000,
+        levelLoadingMaxRetry: 4,
+      });
+
+      hlsRef.current = hls;
+
+      hls.loadSource(hlsUrl);
+      hls.attachMedia(video);
+
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        console.log('✅ HLS manifest loaded successfully');
+        video.play().then(() => {
+          setVideoLoaded(true);
+          setVideoError(null);
+          console.log('▶️ Video playback started');
+        }).catch(err => {
+          console.error('Error playing video:', err);
+          setVideoError('Click play button to start');
+        });
+      });
+
+      hls.on(Hls.Events.ERROR, (event, data) => {
+        console.error('HLS Error:', data);
+        if (data.fatal) {
+          switch (data.type) {
+            case Hls.ErrorTypes.NETWORK_ERROR:
+              console.log('Network error, retrying...');
+              hls.startLoad();
+              setVideoError('Network error - retrying...');
+              break;
+            case Hls.ErrorTypes.MEDIA_ERROR:
+              console.log('Media error, recovering...');
+              hls.recoverMediaError();
+              setVideoError('Media error - recovering...');
+              break;
+            default:
+              console.error('Fatal error, destroying player');
+              hls.destroy();
+              setVideoError('Stream unavailable. Try restarting the stream.');
+              break;
+          }
+        }
+      });
+
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      // Native HLS support (Safari)
+      console.log('Using native HLS support');
+      video.src = hlsUrl;
+      video.addEventListener('loadedmetadata', () => {
+        video.play().then(() => {
+          setVideoLoaded(true);
+          setVideoError(null);
+        });
+      });
+    } else {
+      setVideoError('HLS not supported in this browser');
+      console.error('HLS not supported');
+    }
+  };
 
   const handleStartStream = async () => {
     setLoading(true);
+    setVideoError(null);
+    
     try {
       const response = await fetch('http://localhost:8080/api/streaming/start', { 
         method: 'POST' 
@@ -30,18 +128,31 @@ export default function StreamingPage() {
       
       if (data.status === 'success') {
         setStreaming(true);
-        alert(`✅ Streaming started!\n\nCamera → AWS (${data.server}:${data.port})\nAWS → Your Browser (${data.server}:6061)\n\nWait 5-10 seconds for video to appear...`);
+        alert(
+          `✅ Streaming Started!\n\n` +
+          `📤 Sending to AWS: ${serverInfo.server}:${serverInfo.inputPort}\n` +
+          `📥 Receiving from: ${serverInfo.server}:${serverInfo.outputPort}\n` +
+          `📡 Scheduler: LRTT (Lowest RTT First)\n\n` +
+          `⏱️ Video will appear in 10-15 seconds...`
+        );
         
-        // Start receiving video from AWS after a short delay
+        // Wait for stream to stabilize, then load video
         setTimeout(() => {
-          startReceivingVideo();
-        }, 3000);
+          loadVideo();
+        }, 8000);
       } else {
-        alert(`❌ ${data.message}\n\nMake sure:\n• FFmpeg is installed\n• Camera permission granted\n• AWS server is running`);
+        alert(
+          `❌ Failed to Start Stream\n\n` +
+          `${data.message}\n\n` +
+          `Requirements:\n` +
+          `• FFmpeg installed on your computer\n` +
+          `• Camera permission granted\n` +
+          `• AWS server running (${serverInfo.server})`
+        );
       }
     } catch (err) {
-      console.error('Error:', err);
-      alert('❌ Error starting stream. Check console for details.');
+      console.error('Error starting stream:', err);
+      alert('❌ Error connecting to backend. Make sure backend is running on localhost:8080');
     } finally {
       setLoading(false);
     }
@@ -49,76 +160,44 @@ export default function StreamingPage() {
 
   const handleStopStream = async () => {
     setLoading(true);
+    
     try {
       await fetch('http://localhost:8080/api/streaming/stop', { method: 'POST' });
       setStreaming(false);
+      setVideoLoaded(false);
       
-      // Clean up HLS instance
-      if (videoRef.current && videoRef.current.hlsInstance) {
-        videoRef.current.hlsInstance.destroy();
-        videoRef.current.hlsInstance = null;
+      // Stop HLS player
+      if (hlsRef.current) {
+        hlsRef.current.destroy();
+        hlsRef.current = null;
       }
       
-      // Stop video playback
       if (videoRef.current) {
         videoRef.current.pause();
         videoRef.current.src = '';
-        videoRef.current.load();
       }
       
-      alert('🛑 Streaming stopped');
+      console.log('🛑 Streaming stopped');
+      alert('🛑 Streaming stopped successfully');
     } catch (err) {
-      console.error('Error:', err);
+      console.error('Error stopping stream:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  const startReceivingVideo = async () => {
-    try {
-      const streamUrl = `http://${serverInfo.server}/stream/playlist.m3u8`;
-      console.log(`📺 Loading HLS stream from: ${streamUrl}`);
-      
-      // Check if Hls.js is supported
-      if (window.Hls && window.Hls.isSupported()) {
-        const hls = new window.Hls({
-          enableWorker: true,
-          lowLatencyMode: true,
-          backBufferLength: 90
-        });
-        
-        hls.loadSource(streamUrl);
-        hls.attachMedia(videoRef.current);
-        
-        hls.on(window.Hls.Events.MANIFEST_PARSED, () => {
-          console.log('✅ HLS stream loaded successfully');
-          videoRef.current.play().catch(e => console.log('Autoplay prevented:', e));
-        });
-        
-        hls.on(window.Hls.Events.ERROR, (event, data) => {
-          console.error('HLS Error:', data);
-          if (data.fatal) {
-            console.log('Fatal error - retrying stream...');
-            setTimeout(() => startReceivingVideo(), 2000);
-          }
-        });
-        
-        // Store hls instance to clean up later
-        videoRef.current.hlsInstance = hls;
-        
-      } else if (videoRef.current.canPlayType('application/vnd.apple.mpegurl')) {
-        // Native HLS support (Safari)
-        videoRef.current.src = streamUrl;
-        videoRef.current.addEventListener('loadedmetadata', () => {
-          videoRef.current.play().catch(e => console.log('Autoplay prevented:', e));
-        });
-      } else {
-        console.error('❌ HLS not supported in this browser');
-        alert('HLS playback not supported. Please use Chrome, Firefox, or Safari.');
-      }
-    } catch (err) {
-      console.error('Error receiving video:', err);
+  const handleRetry = () => {
+    setVideoError(null);
+    setVideoLoaded(false);
+    
+    if (hlsRef.current) {
+      hlsRef.current.destroy();
+      hlsRef.current = null;
     }
+    
+    setTimeout(() => {
+      loadVideo();
+    }, 1000);
   };
 
   return (
@@ -129,7 +208,7 @@ export default function StreamingPage() {
           <div className="header-content">
             <div className="header-left">
               <h2>📹 Video Streaming</h2>
-              <p>Port 6060 - LRTT Scheduler (Lowest RTT First)</p>
+              <p>Port {serverInfo.inputPort} - LRTT Scheduler (Lowest RTT First)</p>
             </div>
             <div className="connection-status">
               <div className="connection-status-label">WebSocket Status</div>
@@ -141,15 +220,16 @@ export default function StreamingPage() {
           </div>
         </div>
 
-        {/* Content Grid - Video + Controls */}
+        {/* Content Grid */}
         <div className="content-grid-full">
-          {/* Video Display Section */}
+          {/* Video Section */}
           <div className="video-section">
+            {/* Video Player Card */}
             <div className="video-card">
               <div className="video-header">
                 <h3>📺 Live Stream from AWS</h3>
-                <span className={`video-status-badge ${streaming ? 'live' : 'offline'}`}>
-                  {streaming ? '🔴 LIVE' : '⚪ OFFLINE'}
+                <span className={`video-status-badge ${streaming ? (videoLoaded ? 'live' : 'loading') : 'offline'}`}>
+                  {streaming ? (videoLoaded ? '🔴 LIVE' : '⏳ LOADING') : '⚪ OFFLINE'}
                 </span>
               </div>
               
@@ -162,24 +242,42 @@ export default function StreamingPage() {
                       playsInline 
                       muted
                       controls
-                      style={{ 
-                        width: '100%', 
-                        height: '100%', 
-                        objectFit: 'contain',
-                        backgroundColor: '#000'
-                      }}
+                      className="video-player"
                     />
-                    <div className="video-overlay">
-                      <span className="live-badge">🔴 LIVE</span>
-                    </div>
+                    {!videoLoaded && !videoError && (
+                      <div className="video-loading-overlay">
+                        <div className="loading-spinner"></div>
+                        <p>Connecting to AWS server...</p>
+                        <p className="loading-subtext">Port {serverInfo.outputPort}</p>
+                      </div>
+                    )}
+                    {videoError && (
+                      <div className="video-error-overlay">
+                        <div className="error-icon">⚠️</div>
+                        <p>{videoError}</p>
+                        <button onClick={handleRetry} className="retry-btn">
+                          🔄 Retry Connection
+                        </button>
+                      </div>
+                    )}
                   </>
                 ) : (
                   <div className="video-placeholder-offline">
                     <div className="offline-icon">📹</div>
-                    <p>Click "Start AWS Stream" to begin streaming</p>
+                    <p>Ready to stream</p>
+                    <p className="offline-subtext">Click "Start AWS Stream" to begin</p>
                   </div>
                 )}
               </div>
+
+              {streaming && videoLoaded && (
+                <div className="video-info">
+                  <span className="info-badge">🌐 {serverInfo.server}:{serverInfo.outputPort}/hls</span>
+                  <span className="info-badge">📡 MPTCP LRTT</span>
+                  <span className="info-badge">🎥 H.264</span>
+                  <span className="info-badge">📺 HLS Stream</span>
+                </div>
+              )}
             </div>
 
             {/* AWS Control Card */}
@@ -189,7 +287,7 @@ export default function StreamingPage() {
                   <span className="header-icon">☁️</span>
                   <div>
                     <h3 className="card-title">AWS Lightsail Server</h3>
-                    <p className="card-subtitle">Stream your camera to AWS using MPTCP</p>
+                    <p className="card-subtitle">MPTCP Video Streaming via LRTT Scheduler</p>
                   </div>
                 </div>
               </div>
@@ -204,18 +302,18 @@ export default function StreamingPage() {
                 </div>
 
                 <div className="info-item">
-                  <span className="info-icon">🔌</span>
+                  <span className="info-icon">📤</span>
                   <div>
-                    <div className="info-label">Streaming Port</div>
-                    <div className="info-value">{serverInfo.port} (LRTT)</div>
+                    <div className="info-label">Upload Port</div>
+                    <div className="info-value">{serverInfo.inputPort} (LRTT)</div>
                   </div>
                 </div>
 
                 <div className="info-item">
-                  <span className="info-icon">📤</span>
+                  <span className="info-icon">📥</span>
                   <div>
-                    <div className="info-label">Return Port</div>
-                    <div className="info-value">6061</div>
+                    <div className="info-label">Stream Port</div>
+                    <div className="info-value">{serverInfo.outputPort} (HLS)</div>
                   </div>
                 </div>
 
@@ -223,7 +321,7 @@ export default function StreamingPage() {
                   <span className="info-icon">🎥</span>
                   <div>
                     <div className="info-label">Status</div>
-                    <div className="info-value">{streaming ? 'Active' : 'Inactive'}</div>
+                    <div className="info-value">{streaming ? (videoLoaded ? 'Streaming' : 'Connecting') : 'Inactive'}</div>
                   </div>
                 </div>
               </div>
@@ -249,7 +347,7 @@ export default function StreamingPage() {
               {streaming && (
                 <div className="streaming-notice">
                   <span className="notice-pulse"></span>
-                  <span>Camera streaming to AWS server at {serverInfo.server}:{serverInfo.port}</span>
+                  <span>Active: Camera → AWS:{serverInfo.inputPort} → Browser:{serverInfo.outputPort}</span>
                 </div>
               )}
             </div>
@@ -266,9 +364,9 @@ export default function StreamingPage() {
 
         {/* Info Banner */}
         <div className="info-banner">
-          <strong>ℹ️ How it works:</strong> Your camera streams to AWS ({serverInfo.server}:6060) via FFmpeg. 
-          AWS server receives the stream, converts it to HLS format, and serves it back to your browser. 
-          Stream URL: <code>http://{serverInfo.server}/stream/playlist.m3u8</code>
+          <strong>ℹ️ Stream Flow:</strong> Your camera → FFmpeg → MPTCP (LRTT Scheduler) → 
+          AWS ({serverInfo.server}:{serverInfo.inputPort}) → HLS Conversion → 
+          Your Browser ({serverInfo.server}:{serverInfo.outputPort}/hls/stream.m3u8)
         </div>
       </div>
     </div>
