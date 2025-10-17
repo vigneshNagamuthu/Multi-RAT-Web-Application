@@ -53,12 +53,17 @@ export default function StreamingPage() {
       await fetch('http://localhost:8080/api/streaming/stop', { method: 'POST' });
       setStreaming(false);
       
+      // Clean up HLS instance
+      if (videoRef.current && videoRef.current.hlsInstance) {
+        videoRef.current.hlsInstance.destroy();
+        videoRef.current.hlsInstance = null;
+      }
+      
       // Stop video playback
-      if (videoRef.current && videoRef.current.srcObject) {
-        const stream = videoRef.current.srcObject;
-        const tracks = stream.getTracks();
-        tracks.forEach(track => track.stop());
-        videoRef.current.srcObject = null;
+      if (videoRef.current) {
+        videoRef.current.pause();
+        videoRef.current.src = '';
+        videoRef.current.load();
       }
       
       alert('🛑 Streaming stopped');
@@ -71,12 +76,46 @@ export default function StreamingPage() {
 
   const startReceivingVideo = async () => {
     try {
-      // For WebRTC or direct stream, you'd use Media Source Extensions
-      // For now, we'll show instructions for using VLC or similar
-      console.log(`📺 To view stream: vlc tcp://${serverInfo.server}:6061`);
+      const streamUrl = `http://${serverInfo.server}/stream/playlist.m3u8`;
+      console.log(`📺 Loading HLS stream from: ${streamUrl}`);
       
-      // Alternative: Use img tag for MJPEG stream if AWS is configured for it
-      // Or implement WebRTC for true browser playback
+      // Check if Hls.js is supported
+      if (window.Hls && window.Hls.isSupported()) {
+        const hls = new window.Hls({
+          enableWorker: true,
+          lowLatencyMode: true,
+          backBufferLength: 90
+        });
+        
+        hls.loadSource(streamUrl);
+        hls.attachMedia(videoRef.current);
+        
+        hls.on(window.Hls.Events.MANIFEST_PARSED, () => {
+          console.log('✅ HLS stream loaded successfully');
+          videoRef.current.play().catch(e => console.log('Autoplay prevented:', e));
+        });
+        
+        hls.on(window.Hls.Events.ERROR, (event, data) => {
+          console.error('HLS Error:', data);
+          if (data.fatal) {
+            console.log('Fatal error - retrying stream...');
+            setTimeout(() => startReceivingVideo(), 2000);
+          }
+        });
+        
+        // Store hls instance to clean up later
+        videoRef.current.hlsInstance = hls;
+        
+      } else if (videoRef.current.canPlayType('application/vnd.apple.mpegurl')) {
+        // Native HLS support (Safari)
+        videoRef.current.src = streamUrl;
+        videoRef.current.addEventListener('loadedmetadata', () => {
+          videoRef.current.play().catch(e => console.log('Autoplay prevented:', e));
+        });
+      } else {
+        console.error('❌ HLS not supported in this browser');
+        alert('HLS playback not supported. Please use Chrome, Firefox, or Safari.');
+      }
     } catch (err) {
       console.error('Error receiving video:', err);
     }
@@ -116,42 +155,30 @@ export default function StreamingPage() {
               
               <div className="video-container">
                 {streaming ? (
-                  <div className="video-placeholder">
-                    <div className="placeholder-content">
-                      <div className="streaming-animation">
-                        <div className="pulse-circle"></div>
-                        <div className="pulse-circle delay-1"></div>
-                        <div className="pulse-circle delay-2"></div>
-                      </div>
-                      <h4>🎥 Stream Active</h4>
-                      <p>Video is streaming to AWS server</p>
-                      <div className="stream-path">
-                        <span className="path-item">Your Camera</span>
-                        <span className="path-arrow">→</span>
-                        <span className="path-item">AWS ({serverInfo.server}:6060)</span>
-                        <span className="path-arrow">→</span>
-                        <span className="path-item">Port 6061</span>
-                      </div>
-                      <div className="view-instructions">
-                        <p><strong>To view the stream:</strong></p>
-                        <code>ffplay tcp://{serverInfo.server}:6061</code>
-                        <p className="instruction-note">or use VLC: Media → Open Network Stream → <code>tcp://{serverInfo.server}:6061</code></p>
-                      </div>
+                  <>
+                    <video 
+                      ref={videoRef} 
+                      autoPlay 
+                      playsInline 
+                      muted
+                      controls
+                      style={{ 
+                        width: '100%', 
+                        height: '100%', 
+                        objectFit: 'contain',
+                        backgroundColor: '#000'
+                      }}
+                    />
+                    <div className="video-overlay">
+                      <span className="live-badge">🔴 LIVE</span>
                     </div>
-                  </div>
+                  </>
                 ) : (
                   <div className="video-placeholder-offline">
                     <div className="offline-icon">📹</div>
                     <p>Click "Start AWS Stream" to begin streaming</p>
                   </div>
                 )}
-                <video 
-                  ref={videoRef} 
-                  autoPlay 
-                  playsInline 
-                  muted
-                  style={{ display: 'none' }}
-                />
               </div>
             </div>
 
@@ -239,9 +266,9 @@ export default function StreamingPage() {
 
         {/* Info Banner */}
         <div className="info-banner">
-          <strong>ℹ️ How it works:</strong> Your camera streams to AWS ({serverInfo.server}:6060) using MPTCP with LRTT scheduler. 
-          AWS server receives the stream and makes it available on port 6061. 
-          Use FFplay or VLC to view: <code>ffplay tcp://{serverInfo.server}:6061</code>
+          <strong>ℹ️ How it works:</strong> Your camera streams to AWS ({serverInfo.server}:6060) via FFmpeg. 
+          AWS server receives the stream, converts it to HLS format, and serves it back to your browser. 
+          Stream URL: <code>http://{serverInfo.server}/stream/playlist.m3u8</code>
         </div>
       </div>
     </div>

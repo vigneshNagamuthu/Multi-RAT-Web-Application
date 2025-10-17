@@ -21,3 +21,12 @@ If your system requires a sudo password, please edit the visudo file by:
     npm install react-router-dom
 9) next,
     npm start
+
+**VIDEO STREAMING SETUP**
+For video streaming to work, you MUST set up the AWS server first!
+See STREAMING_TEST_GUIDE.md and AWS_SETUP.md for complete instructions.
+
+Quick setup:
+1) SSH into AWS: ssh ubuntu@54.169.114.206
+2) Run: ~/start_video_server.sh
+3) Then start the web app (steps above)
