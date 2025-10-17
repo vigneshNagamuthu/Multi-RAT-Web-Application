@@ -41,33 +41,72 @@ public class VideoStreamingService {
         try {
             // Detect OS for camera input
             String os = System.getProperty("os.name").toLowerCase();
-            String cameraInput;
-            
-            if (os.contains("mac")) {
-                // macOS - use AVFoundation
-                cameraInput = "-f avfoundation -framerate 30 -video_size 1280x720 -i '0:none'";
-            } else if (os.contains("linux")) {
-                // Linux - use v4l2
-                cameraInput = "-f v4l2 -framerate 30 -video_size 1280x720 -i /dev/video0";
-            } else {
-                // Windows - use dshow
-                cameraInput = "-f dshow -framerate 30 -video_size 1280x720 -i video='Integrated Camera'";
-            }
-            
-            // FFmpeg command to stream to AWS
-            String command = String.format(
-                "ffmpeg %s " +
-                "-vcodec libx264 -preset ultrafast -tune zerolatency " +
-                "-b:v 2M -maxrate 2M -bufsize 4M " +
-                "-g 60 -keyint_min 60 " +
-                "-f mpegts tcp://%s:%d",
-                cameraInput, AWS_SERVER, VIDEO_PORT
-            );
             
             System.out.println("🎥 Starting video stream to AWS: " + AWS_SERVER + ":" + VIDEO_PORT);
-            System.out.println("🔍 Command: " + command);
+            System.out.println("🖥️  Detected OS: " + os);
             
-            ProcessBuilder pb = new ProcessBuilder("bash", "-c", command);
+            ProcessBuilder pb;
+            
+            if (os.contains("win")) {
+                // Windows: Build argument list directly
+                pb = new ProcessBuilder(
+                    "ffmpeg",
+                    "-f", "dshow",
+                    "-rtbufsize", "100M",
+                    "-framerate", "30",
+                    "-video_size", "1280x720",
+                    "-i", "video=Integrated Camera",
+                    "-vcodec", "libx264",
+                    "-preset", "ultrafast",
+                    "-tune", "zerolatency",
+                    "-b:v", "2M",
+                    "-maxrate", "2M",
+                    "-bufsize", "4M",
+                    "-g", "60",
+                    "-keyint_min", "60",
+                    "-f", "mpegts",
+                    "tcp://" + AWS_SERVER + ":" + VIDEO_PORT
+                );
+            } else if (os.contains("mac")) {
+                // macOS
+                pb = new ProcessBuilder(
+                    "ffmpeg",
+                    "-f", "avfoundation",
+                    "-framerate", "30",
+                    "-video_size", "1280x720",
+                    "-i", "0:none",
+                    "-vcodec", "libx264",
+                    "-preset", "ultrafast",
+                    "-tune", "zerolatency",
+                    "-b:v", "2M",
+                    "-maxrate", "2M",
+                    "-bufsize", "4M",
+                    "-g", "60",
+                    "-keyint_min", "60",
+                    "-f", "mpegts",
+                    "tcp://" + AWS_SERVER + ":" + VIDEO_PORT
+                );
+            } else {
+                // Linux
+                pb = new ProcessBuilder(
+                    "ffmpeg",
+                    "-f", "v4l2",
+                    "-framerate", "30",
+                    "-video_size", "1280x720",
+                    "-i", "/dev/video0",
+                    "-vcodec", "libx264",
+                    "-preset", "ultrafast",
+                    "-tune", "zerolatency",
+                    "-b:v", "2M",
+                    "-maxrate", "2M",
+                    "-bufsize", "4M",
+                    "-g", "60",
+                    "-keyint_min", "60",
+                    "-f", "mpegts",
+                    "tcp://" + AWS_SERVER + ":" + VIDEO_PORT
+                );
+            }
+            
             pb.redirectErrorStream(true);
             
             streamProcess = pb.start();
