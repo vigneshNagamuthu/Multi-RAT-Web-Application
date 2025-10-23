@@ -1,11 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import Hls from 'hls.js';
-import MetricsDisplay from '../components/streaming/MetricsDisplay';
-import useStreamingWebSocket from '../hooks/useStreamingWebSocket';
 import './StreamingPage.css';
 
 export default function StreamingPage() {
-  const { metrics, isConnected, error } = useStreamingWebSocket('ws://localhost:8080/ws/streaming');
   const [streaming, setStreaming] = useState(false);
   const [loading, setLoading] = useState(false);
   const [videoLoaded, setVideoLoaded] = useState(false);
@@ -210,13 +207,6 @@ export default function StreamingPage() {
               <h2>📹 Video Streaming</h2>
               <p>Port {serverInfo.inputPort} - LRTT Scheduler (Lowest RTT First)</p>
             </div>
-            <div className="connection-status">
-              <div className="connection-status-label">WebSocket Status</div>
-              <div className="status-indicator">
-                <span className={`status-dot ${isConnected ? 'connected' : 'disconnected'}`}></span>
-                <span>{isConnected ? 'Connected' : 'Disconnected'}</span>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -350,14 +340,6 @@ export default function StreamingPage() {
                   <span>Active: Camera → AWS:{serverInfo.inputPort} → Browser:{serverInfo.outputPort}</span>
                 </div>
               )}
-            </div>
-          </div>
-
-          {/* Metrics Section */}
-          <div className="metrics-section">
-            <div className="section-card">
-              <h3>📊 Real-Time Metrics</h3>
-              <MetricsDisplay metrics={metrics} isConnected={isConnected} error={error} />
             </div>
           </div>
         </div>

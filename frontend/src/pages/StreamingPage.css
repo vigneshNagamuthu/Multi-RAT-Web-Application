@@ -66,6 +66,14 @@
   aspect-ratio: 16 / 9;
   overflow: hidden;
   position: relative;
+  max-width: 100%;
+}
+
+.video-player {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
 }
 
 .video-placeholder,
