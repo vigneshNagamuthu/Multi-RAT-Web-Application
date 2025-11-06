@@ -14,7 +14,7 @@ import java.util.regex.Pattern;
 @Service
 public class VideoStreamingService {
 
-    private static final String AWS_SERVER = "54.169.114.206";
+    private static final String AWS_SERVER = "13.212.221.200";
     private static final int VIDEO_PORT = 6060;
 
     @Autowired(required = false)
@@ -30,7 +30,7 @@ public class VideoStreamingService {
     private volatile int droppedFrames = 0;
 
     /**
-     * Start video streaming to AWS server at 54.169.114.206:6060
+     * Start video streaming to AWS server at 13.212.221.200:6060
      */
     public synchronized boolean startStreaming() {
         if (isStreaming) {

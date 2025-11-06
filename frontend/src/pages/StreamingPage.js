@@ -10,7 +10,7 @@ export default function StreamingPage() {
   
   // Server configuration
   const serverInfo = { 
-    server: '54.169.114.206', 
+    server: '13.212.221.200', 
     inputPort: 6060,    // Port for sending stream TO AWS
     outputPort: 6061    // Port for receiving HLS FROM AWS
   };
