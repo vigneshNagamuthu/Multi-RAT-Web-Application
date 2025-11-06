@@ -23,13 +23,8 @@ public class SensorWebSocketHandler extends TextWebSocketHandler {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     private boolean isSchedulerStarted = false;
-
-    // Recent buffer (last 100 packets) for rolling statistics
-    private final List<SensorPacket> packetBuffer = new ArrayList<>();
-
-    // ✅ Running totals (lifetime)
-    private int totalPacketsReceived = 0;
-    private long totalLostPackets = 0;
+    
+    private int lastSentSequence = 0;  // ✅ Track what we've already sent
 
     @Autowired(required = false)
     private MPTCPPacketService mptcpPacketService;
@@ -56,62 +51,47 @@ public class SensorWebSocketHandler extends TextWebSocketHandler {
             if (sessions.isEmpty()) return;
 
             if (mptcpPacketService != null && mptcpPacketService.isCapturing()) {
-                List<SensorPacket> recentPackets = mptcpPacketService.getRecentPackets(5);
-
-                if (!recentPackets.isEmpty()) {
-                    synchronized (packetBuffer) {
-                        // Add new packets to history
-                        packetBuffer.addAll(recentPackets);
-                        totalPacketsReceived += recentPackets.size();
-
-                        // ✅ Count new lost packets (add to lifetime total)
-                        long newlyLost = recentPackets.stream()
-                                .filter(SensorPacket::isLost)
-                                .count();
-                        totalLostPackets += newlyLost;
-
-                        // Trim buffer to last 100 packets
-                        if (packetBuffer.size() > 100) {
-                            packetBuffer.subList(0, packetBuffer.size() - 100).clear();
-                        }
-
-                        // ---- Calculate rolling (recent) loss rate ----
-                        int visiblePackets = packetBuffer.size();
-                        long recentLostCount = packetBuffer.stream()
-                                .filter(SensorPacket::isLost)
-                                .count();
-                        double recentLossRate = visiblePackets > 0
-                                ? (recentLostCount * 100.0 / visiblePackets)
-                                : 0.0;
-
-                        // ---- Calculate lifetime loss rate ----
-                        double lifetimeLossRate = totalPacketsReceived > 0
-                                ? (totalLostPackets * 100.0 / totalPacketsReceived)
-                                : 0.0;
-
-                        // ---- Build JSON payload ----
-                        Map<String, Object> payload = new HashMap<>();
-                        payload.put("packets", recentPackets);      // only latest packets
-                        payload.put("total", totalPacketsReceived);  // lifetime total
-                        payload.put("lost", totalLostPackets);       // lifetime lost
-                        payload.put("lossRate", lifetimeLossRate);   // lifetime loss %
-                        payload.put("recentLossRate", recentLossRate); // rolling 100 window
-
-                        // ---- Send JSON to frontend ----
-                        try {
-                            String json = objectMapper.writeValueAsString(payload);
-                            broadcastToAll(json);
-
-                            // Console log for debugging
-                            System.out.printf("📊 Sent to UI | Total: %d | Lost: %d | Lifetime Loss: %.2f%% | Recent: %.2f%%%n",
-                                    totalPacketsReceived, totalLostPackets, lifetimeLossRate, recentLossRate);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
+                // ✅ Get ALL packets (not just recent)
+                List<SensorPacket> allPackets = mptcpPacketService.getAllPackets();
+                
+                if (allPackets.isEmpty()) return;
+                
+                // ✅ Only send NEW packets (those we haven't sent yet)
+                List<SensorPacket> newPackets = new ArrayList<>();
+                for (SensorPacket packet : allPackets) {
+                    if (packet.getSequenceNumber() > lastSentSequence) {
+                        newPackets.add(packet);
+                    }
+                }
+                
+                if (!newPackets.isEmpty()) {
+                    // Update last sent sequence
+                    lastSentSequence = newPackets.get(newPackets.size() - 1).getSequenceNumber();
+                    
+                    // ✅ Calculate statistics
+                    long totalPackets = allPackets.size();
+                    long lostPackets = allPackets.stream().filter(SensorPacket::isLost).count();
+                    double lossRate = totalPackets > 0 ? (lostPackets * 100.0 / totalPackets) : 0.0;
+                    
+                    // ✅ Build payload with ONLY new packets
+                    Map<String, Object> payload = new HashMap<>();
+                    payload.put("packets", newPackets);      // Only NEW packets
+                    payload.put("total", totalPackets);      // Total count
+                    payload.put("lost", lostPackets);        // Lost count
+                    payload.put("lossRate", lossRate);       // Loss percentage
+                    
+                    try {
+                        String json = objectMapper.writeValueAsString(payload);
+                        broadcastToAll(json);
+                        
+                        System.out.printf("📡 Sent %d new packets to UI | Total: %d | Lost: %d | Loss: %.2f%%%n",
+                                newPackets.size(), totalPackets, lostPackets, lossRate);
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
                 }
             }
-        }, 0, 500, TimeUnit.MILLISECONDS);
+        }, 0, 100, TimeUnit.MILLISECONDS);  // ✅ Check every 100ms for new packets
     }
 
     private void broadcastToAll(String json) {
@@ -128,13 +108,11 @@ public class SensorWebSocketHandler extends TextWebSocketHandler {
         }
     }
 
-    // Reset everything when /api/sensor/reset is called
-    public void clearPackets() {
-        synchronized (packetBuffer) {
-            packetBuffer.clear();
-        }
-        totalPacketsReceived = 0;
-        totalLostPackets = 0;
-        System.out.println("🧹 Cleared packet buffer and reset all counters.");
+    /**
+     * Reset when user clicks Reset button
+     */
+    public void resetCounters() {
+        lastSentSequence = 0;
+        System.out.println("🔄 Reset WebSocket counters");
     }
 }

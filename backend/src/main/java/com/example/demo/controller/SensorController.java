@@ -2,6 +2,7 @@ package com.example.demo.controller;
 
 import com.example.demo.service.IPerfService;
 import com.example.demo.service.MPTCPPacketService;
+import com.example.demo.websocket.SensorWebSocketHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,12 +20,20 @@ public class SensorController {
 
     @Autowired(required = false)
     private MPTCPPacketService mptcpPacketService;
+    
+    @Autowired(required = false)
+    private SensorWebSocketHandler webSocketHandler;
 
     @PostMapping("/reset")
     public ResponseEntity<Map<String, Object>> resetSequence() {
-        // Only reset MPTCP service
+        // ✅ Reset MPTCP service
         if (mptcpPacketService != null) {
             mptcpPacketService.resetSequence();
+        }
+        
+        // ✅ Reset WebSocket handler
+        if (webSocketHandler != null) {
+            webSocketHandler.resetCounters();
         }
         
         Map<String, Object> response = new HashMap<>();
@@ -43,9 +52,10 @@ public class SensorController {
         response.put("active", true);
         response.put("iperfRunning", iperfService.isRunning());
         
-        // Add MPTCP capture status
         if (mptcpPacketService != null) {
             response.put("mptcpCapturing", mptcpPacketService.isCapturing());
+            response.put("currentSequence", mptcpPacketService.getCurrentSequence());
+            response.put("packetCount", mptcpPacketService.getPacketCount());
         }
         
         return ResponseEntity.ok(response);
@@ -60,19 +70,19 @@ public class SensorController {
         boolean started = iperfService.startIPerf(duration);
         
         if (started) {
-            // ALSO automatically start MPTCP capture
+            // ✅ Auto-start MPTCP packet capture
             if (mptcpPacketService != null) {
                 mptcpPacketService.startCapture();
-                System.out.println("✅ Auto-started MPTCP packet capture");
+                System.out.println("✅ Auto-started MPTCP packet capture (max 100 packets)");
             }
             
             response.put("status", "success");
-            response.put("message", "iperf3 traffic started and packet capture enabled");
+            response.put("message", "iperf3 traffic started - will capture 100 packets");
             response.put("server", iperfService.getServerIp());
             response.put("port", iperfService.getPort());
             response.put("duration", duration);
             response.put("scheduler", "Redundant");
-            response.put("realDataEnabled", true);
+            response.put("maxPackets", 100);
             return ResponseEntity.ok(response);
         } else {
             response.put("status", "error");
@@ -85,7 +95,7 @@ public class SensorController {
     public ResponseEntity<Map<String, String>> stopIPerf() {
         iperfService.stopIPerf();
         
-        // ALSO stop MPTCP capture
+        // ✅ Stop MPTCP capture
         if (mptcpPacketService != null) {
             mptcpPacketService.stopCapture();
             System.out.println("🛑 Auto-stopped MPTCP packet capture");

@@ -16,7 +16,7 @@ public class MPTCPPacketService {
     private boolean isCapturing = false;
     private Thread captureThread;
     private int packetSequence = 0;
-    private final int MAX_QUEUE_SIZE = 100;
+    private final int MAX_PACKETS = 100;  // ✅ Stop at 100
     private final int PORT = 5000;
 
     /**
@@ -30,6 +30,7 @@ public class MPTCPPacketService {
 
         try {
             System.out.println("🎯 Starting REAL packet capture for port " + PORT);
+            System.out.println("📊 Will generate exactly " + MAX_PACKETS + " packets in sequence");
             
             captureThread = new Thread(() -> captureNetworkStats());
             captureThread.start();
@@ -52,93 +53,95 @@ public class MPTCPPacketService {
             captureThread.interrupt();
         }
         isCapturing = false;
-        packetSequence = 0;
-        System.out.println("🛑 Packet capture stopped");
+        System.out.println("🛑 Packet capture stopped at packet #" + packetSequence);
     }
 
     /**
-     * Capture network statistics using netstat (Mac/Linux compatible)
+     * Capture network statistics and generate packets sequentially
      */
     private void captureNetworkStats() {
         try {
             String os = System.getProperty("os.name").toLowerCase();
             System.out.println("🖥️  Detected OS: " + os);
             
-            while (!Thread.currentThread().isInterrupted()) {
-                ProcessBuilder pb;
+            boolean connectionEstablished = false;
+            
+            while (!Thread.currentThread().isInterrupted() && packetSequence < MAX_PACKETS) {
                 
-                if (os.contains("mac")) {
-                    // macOS: Use netstat
-                    pb = new ProcessBuilder("netstat", "-an");
-                } else if (os.contains("linux")) {
-                    // Linux: Use ss or netstat
-                    pb = new ProcessBuilder("ss", "-an");
-                } else {
-                    // Windows: Use netstat
-                    pb = new ProcessBuilder("netstat", "-an");
+                // ✅ Check for connection only if not yet established
+                if (!connectionEstablished) {
+                    ProcessBuilder pb;
+                    
+                    if (os.contains("mac")) {
+                        pb = new ProcessBuilder("netstat", "-an");
+                    } else if (os.contains("linux")) {
+                        pb = new ProcessBuilder("ss", "-an");
+                    } else {
+                        pb = new ProcessBuilder("netstat", "-an");
+                    }
+                    
+                    Process process = pb.start();
+                    BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(process.getInputStream())
+                    );
+                    
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        if (line.contains("." + PORT) && line.contains("ESTABLISHED")) {
+                            connectionEstablished = true;
+                            System.out.println("✅ Connection ESTABLISHED on port " + PORT);
+                            break;
+                        }
+                    }
+                    
+                    reader.close();
+                    process.waitFor();
+                    
+                    if (!connectionEstablished) {
+                        System.out.println("⏳ Waiting for connection on port " + PORT + "...");
+                        Thread.sleep(500);
+                        continue;
+                    }
                 }
                 
-                Process process = pb.start();
-                BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(process.getInputStream())
-                );
-                
-                boolean foundConnection = false;
-                String line;
-                
-                while ((line = reader.readLine()) != null) {
-                    // Look for ESTABLISHED connections on port 5000
-                    if (line.contains("." + PORT) && line.contains("ESTABLISHED")) {
-                        foundConnection = true;
+                // ✅ Connection is established, generate packets sequentially
+                if (connectionEstablished && packetSequence < MAX_PACKETS) {
+                    // Generate ONE packet at a time
+                    packetSequence++;
+                    
+                    // ✅ 2% packet loss rate (realistic for TCP)
+                    boolean isLost = Math.random() < 0.02;
+                    
+                    SensorPacket packet = new SensorPacket(
+                        packetSequence,
+                        isLost,
+                        System.currentTimeMillis(),
+                        "Redundant",
+                        PORT
+                    );
+                    
+                    packetQueue.add(packet);
+                    
+                    if (isLost) {
+                        System.out.println("❌ Packet #" + packetSequence + " LOST");
+                    } else {
+                        System.out.println("✅ Packet #" + packetSequence + " OK");
+                    }
+                    
+                    // ✅ Check if we reached 100
+                    if (packetSequence >= MAX_PACKETS) {
+                        System.out.println("🎉 Reached " + MAX_PACKETS + " packets! Stopping capture.");
+                        isCapturing = false;
                         break;
                     }
-                }
-                
-                reader.close();
-                process.waitFor();
-                
-                // If connection exists, generate packets based on actual traffic
-                if (foundConnection) {
-                    // Generate 5-10 packets per poll (simulating packet activity)
-                    int packetsThisPoll = 5 + (int)(Math.random() * 6);
                     
-                    for (int i = 0; i < packetsThisPoll; i++) {
-                        packetSequence++;
-                        
-                        // Realistic packet loss: 1-3% for TCP (very low)
-                        boolean isLost = Math.random() < 0.02;
-                        
-                        SensorPacket packet = new SensorPacket(
-                            packetSequence,
-                            isLost,
-                            System.currentTimeMillis(),
-                            "Redundant",
-                            PORT
-                        );
-                        
-                        packetQueue.add(packet);
-                        
-                        // Keep queue size limited
-                        while (packetQueue.size() > MAX_QUEUE_SIZE) {
-                            packetQueue.poll();
-                        }
-                        
-                        if (isLost) {
-                            System.out.println("❌ Packet #" + packetSequence + " LOST");
-                        } else {
-                            System.out.println("✅ Packet #" + packetSequence + " OK");
-                        }
-                    }
-                } else {
-                    System.out.println("⏳ No active connection on port " + PORT + " yet...");
+                    // ✅ Generate packets at reasonable rate (100ms = 10 packets/sec)
+                    Thread.sleep(100);
                 }
-                
-                // Poll every 500ms
-                Thread.sleep(500);
             }
             
         } catch (InterruptedException e) {
-            System.out.println("📊 Capture thread interrupted");
+            System.out.println("📊 Capture thread interrupted at packet #" + packetSequence);
         } catch (Exception e) {
             if (!Thread.currentThread().isInterrupted()) {
                 System.err.println("❌ Error capturing network stats: " + e.getMessage());
@@ -146,7 +149,7 @@ public class MPTCPPacketService {
             }
         } finally {
             isCapturing = false;
-            System.out.println("✅ Packet capture ended");
+            System.out.println("✅ Packet capture ended. Total packets: " + packetSequence);
         }
     }
 
@@ -164,7 +167,7 @@ public class MPTCPPacketService {
     }
 
     /**
-     * Get all captured packets
+     * Get all captured packets (up to 100)
      */
     public List<SensorPacket> getAllPackets() {
         return new ArrayList<>(packetQueue);
@@ -184,6 +187,7 @@ public class MPTCPPacketService {
     public void resetSequence() {
         packetSequence = 0;
         clearPackets();
+        isCapturing = false;
         System.out.println("🔄 Reset sequence to 0");
     }
 
@@ -193,5 +197,9 @@ public class MPTCPPacketService {
 
     public int getPacketCount() {
         return packetQueue.size();
+    }
+    
+    public int getCurrentSequence() {
+        return packetSequence;
     }
 }
