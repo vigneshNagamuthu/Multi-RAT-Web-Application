@@ -1,38 +1,115 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
+import Hls from 'hls.js';
 import './VideoPlayer.css';
+
+const HLS_URL = 'http://13.212.221.200:6061/hls/stream.m3u8';
 
 export default function VideoPlayer() {
   const videoRef = useRef(null);
+  const hlsRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    return () => {
+      // Cleanup on unmount
+      if (hlsRef.current) {
+        hlsRef.current.destroy();
+      }
+    };
+  }, []);
 
   const handleStart = async () => {
     try {
       setError(null);
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: {
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        },
-        audio: false
+      console.log('🎬 Starting stream...');
+      
+      // Start streaming from backend
+      console.log('📡 Calling backend to start streaming...');
+      const response = await fetch('http://localhost:8080/api/streaming/start', {
+        method: 'POST'
       });
       
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        setIsPlaying(true);
+      if (!response.ok) {
+        throw new Error('Failed to start streaming from backend');
       }
+      
+      console.log('✅ Backend streaming started');
+      
+      // Wait a bit for stream to initialize
+      console.log('⏳ Waiting for stream to initialize...');
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      
+      console.log('🎥 Setting up HLS player with URL:', HLS_URL);
+      
+      // Setup HLS player
+      if (Hls.isSupported()) {
+        console.log('✅ HLS.js is supported');
+        const hls = new Hls({
+          enableWorker: true,
+          lowLatencyMode: true,
+          backBufferLength: 90,
+          debug: true
+        });
+        
+        hls.loadSource(HLS_URL);
+        hls.attachMedia(videoRef.current);
+        
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          console.log('✅ HLS manifest parsed, starting playback');
+          videoRef.current.play();
+          setIsPlaying(true);
+        });
+        
+        hls.on(Hls.Events.ERROR, (event, data) => {
+          console.error('❌ HLS Error:', data);
+          if (data.fatal) {
+            setError(`Stream error: ${data.type} - ${data.details}`);
+            setIsPlaying(false);
+          }
+        });
+        
+        hlsRef.current = hls;
+      } else if (videoRef.current.canPlayType('application/vnd.apple.mpegurl')) {
+        // Native HLS support (Safari)
+        console.log('✅ Using native HLS support');
+        videoRef.current.src = HLS_URL;
+        videoRef.current.addEventListener('loadedmetadata', () => {
+          console.log('✅ Video metadata loaded');
+          videoRef.current.play();
+          setIsPlaying(true);
+        });
+      } else {
+        setError('HLS is not supported in this browser');
+      }
+      
     } catch (err) {
-      console.error('Error accessing camera:', err);
-      setError('Could not access camera. Please check permissions.');
+      console.error('❌ Error starting stream:', err);
+      setError('Could not start video stream. Check if backend is running.');
     }
   };
 
-  const handleStop = () => {
-    if (videoRef.current && videoRef.current.srcObject) {
-      const tracks = videoRef.current.srcObject.getTracks();
-      tracks.forEach(track => track.stop());
-      videoRef.current.srcObject = null;
+  const handleStop = async () => {
+    try {
+      // Stop HLS player
+      if (hlsRef.current) {
+        hlsRef.current.destroy();
+        hlsRef.current = null;
+      }
+      
+      if (videoRef.current) {
+        videoRef.current.pause();
+        videoRef.current.src = '';
+      }
+      
+      // Stop streaming from backend
+      await fetch('http://localhost:8080/api/streaming/stop', {
+        method: 'POST'
+      });
+      
       setIsPlaying(false);
+    } catch (err) {
+      console.error('Error stopping stream:', err);
     }
   };
 

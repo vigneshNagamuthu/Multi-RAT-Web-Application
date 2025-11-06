@@ -87,13 +87,16 @@ public class VideoStreamingService {
                     "tcp://" + AWS_SERVER + ":" + VIDEO_PORT
                 );
             } else {
-                // Linux
+                // Linux - Auto-detect video device
+                String videoDevice = detectLinuxVideoDevice();
+                System.out.println("📹 Using video device: " + videoDevice);
+                
                 pb = new ProcessBuilder(
                     "ffmpeg",
                     "-f", "v4l2",
                     "-framerate", "30",
                     "-video_size", "1280x720",
-                    "-i", "/dev/video0",
+                    "-i", videoDevice,
                     "-vcodec", "libx264",
                     "-preset", "ultrafast",
                     "-tune", "zerolatency",
@@ -250,6 +253,58 @@ public class VideoStreamingService {
         if (currentFps == 0) return 0;
         double totalFrames = currentFps * 10; // Last 10 seconds
         return (droppedFrames / totalFrames) * 100;
+    }
+
+    /**
+     * Auto-detect available video device on Linux
+     */
+    private String detectLinuxVideoDevice() {
+        try {
+            // Check common video device paths
+            for (int i = 0; i < 10; i++) {
+                String devicePath = "/dev/video" + i;
+                java.io.File device = new java.io.File(devicePath);
+                
+                if (device.exists()) {
+                    // Verify it's a valid video capture device using v4l2-ctl
+                    try {
+                        ProcessBuilder pb = new ProcessBuilder("v4l2-ctl", "--device=" + devicePath, "--list-formats");
+                        Process process = pb.start();
+                        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                        String line;
+                        boolean isCapture = false;
+                        
+                        while ((line = reader.readLine()) != null) {
+                            // Check if device supports video capture
+                            if (line.toLowerCase().contains("video capture") || 
+                                line.toLowerCase().contains("motion-jpeg") ||
+                                line.toLowerCase().contains("yuyv") ||
+                                line.toLowerCase().contains("h264")) {
+                                isCapture = true;
+                                break;
+                            }
+                        }
+                        
+                        process.waitFor();
+                        
+                        if (isCapture) {
+                            System.out.println("✅ Found valid video capture device: " + devicePath);
+                            return devicePath;
+                        }
+                    } catch (Exception e) {
+                        // v4l2-ctl might not be installed, fall back to first device found
+                        System.out.println("⚠️ v4l2-ctl not available, using first video device found");
+                        return devicePath;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("⚠️ Error detecting video device: " + e.getMessage());
+        }
+        
+        // Fallback to /dev/video0
+        System.out.println("⚠️ No video device detected, falling back to /dev/video0");
+        return "/dev/video0";
     }
 
     public boolean isStreaming() {
