@@ -4,14 +4,15 @@ import useSensorWebSocket from '../hooks/useSensorWebSocket';
 import './SensorPage.css';
 
 export default function SensorPage() {
-  const { packets, isConnected, error, clearPackets } = useSensorWebSocket('ws://localhost:8080/ws/sensor');
+  // ✅ Now includes stats (total, lost, lossRate) from backend
+  const { packets, stats, isConnected, error, clearPackets } = useSensorWebSocket('ws://localhost:8080/ws/sensor');
   const [iperfRunning, setIperfRunning] = useState(false);
   const [loading, setLoading] = useState(false);
 
   // Server configuration
   const serverInfo = {
     server: '13.212.221.200',
-    port: 5000  // Sensor data port
+    port: 5000 // Sensor data port
   };
 
   const handleReset = async () => {
@@ -32,7 +33,7 @@ export default function SensorPage() {
         { method: 'POST' }
       );
       const data = await response.json();
-      
+
       if (data.status === 'success') {
         setIperfRunning(true);
         alert(
@@ -98,7 +99,13 @@ export default function SensorPage() {
           <div className="main-section">
             {/* Packet Visualizer Card */}
             <div className="visualizer-card">
-              <PacketLossVisualizer packets={packets} isConnected={isConnected} error={error} />
+              {/* ✅ Pass stats to visualizer */}
+              <PacketLossVisualizer
+                packets={packets}
+                stats={stats}
+                isConnected={isConnected}
+                error={error}
+              />
             </div>
 
             {/* AWS Control Card */}
@@ -148,17 +155,17 @@ export default function SensorPage() {
               </div>
 
               <div className="stream-controls">
-                <button 
-                  onClick={handleStartIPerf} 
-                  disabled={iperfRunning || loading} 
+                <button
+                  onClick={handleStartIPerf}
+                  disabled={iperfRunning || loading}
                   className="btn-stream-start"
                 >
                   {loading && !iperfRunning ? '⏳ Starting...' : '🚀 Start AWS iperf3 Traffic'}
                 </button>
-                
-                <button 
-                  onClick={handleStopIPerf} 
-                  disabled={!iperfRunning || loading} 
+
+                <button
+                  onClick={handleStopIPerf}
+                  disabled={!iperfRunning || loading}
                   className="btn-stream-stop"
                 >
                   {loading && iperfRunning ? '⏳ Stopping...' : '🛑 Stop Traffic'}
@@ -177,7 +184,7 @@ export default function SensorPage() {
                 <button onClick={clearPackets} className="btn-secondary">
                   🗑️ Clear Packets
                 </button>
-                
+
                 <button onClick={handleReset} className="btn-secondary">
                   🔄 Reset Sequence
                 </button>

@@ -1,6 +1,6 @@
 import './PacketLossVisualizer.css';
 
-export default function PacketLossVisualizer({ packets, isConnected, error }) {
+export default function PacketLossVisualizer({ packets, stats, isConnected, error }) {
   if (error) {
     return (
       <div className="alert alert-error">
@@ -17,29 +17,25 @@ export default function PacketLossVisualizer({ packets, isConnected, error }) {
     );
   }
 
-  const lostPackets = packets.filter(p => p.isLost).length;
-  const totalPackets = packets.length;
-  const lossRate = totalPackets > 0 ? ((lostPackets / totalPackets) * 100).toFixed(2) : 0;
-
   return (
     <div className="visualizer-container">
       {/* Stats Summary */}
       <div className="stats-grid">
         <div className="stat-card total">
           <div className="stat-label">Total Packets</div>
-          <div className="stat-value">{totalPackets}</div>
+          <div className="stat-value">{stats.total}</div>
           <div className="stat-unit">received</div>
         </div>
-        
+
         <div className="stat-card lost">
           <div className="stat-label">Lost Packets</div>
-          <div className="stat-value">{lostPackets}</div>
+          <div className="stat-value">{stats.lost}</div>
           <div className="stat-unit">dropped</div>
         </div>
-        
+
         <div className="stat-card rate">
           <div className="stat-label">Loss Rate</div>
-          <div className="stat-value">{lossRate}%</div>
+          <div className="stat-value">{stats.lossRate.toFixed(2)}%</div>
           <div className="stat-unit">average</div>
         </div>
       </div>
@@ -60,38 +56,40 @@ export default function PacketLossVisualizer({ packets, isConnected, error }) {
             {packets.length} packets
           </span>
         </div>
-        
+
         <div className="packet-list">
           {packets.length === 0 ? (
-            <div className="packet-empty">
-              ⏳ Waiting for packets...
-            </div>
+            <div className="packet-empty">⏳ Waiting for packets...</div>
           ) : (
             <>
-              {packets.slice().reverse().map((packet, idx) => (
-                <div
-                  key={packets.length - idx}
-                  className={`packet-item ${packet.isLost ? 'lost' : 'received'}`}
-                >
-                  <div className="packet-info">
-                    <div className="packet-icon">
-                      {packet.isLost ? '❌' : '✅'}
-                    </div>
-                    <div className="packet-details">
-                      <div className="packet-seq">
-                        Seq: {packet.sequenceNumber}
+              {[...packets]
+                // ✅ Sort newest first by sequenceNumber (fixes wrong order)
+                .sort((a, b) => b.sequenceNumber - a.sequenceNumber)
+                .map((packet, idx) => (
+                  <div
+                    key={idx}
+                    className={`packet-item ${packet.isLost ? 'lost' : 'received'}`}
+                  >
+                    <div className="packet-info">
+                      <div className="packet-icon">
+                        {packet.isLost ? '❌' : '✅'}
                       </div>
-                      <span className={`packet-status ${packet.isLost ? 'lost' : 'ok'}`}>
-                        {packet.isLost ? 'LOST' : 'OK'}
-                      </span>
+                      <div className="packet-details">
+                        <div className="packet-seq">Seq: {packet.sequenceNumber}</div>
+                        <span
+                          className={`packet-status ${
+                            packet.isLost ? 'lost' : 'ok'
+                          }`}
+                        >
+                          {packet.isLost ? 'LOST' : 'OK'}
+                        </span>
+                      </div>
                     </div>
+                    <span className="packet-time">
+                      {new Date(packet.timestamp).toLocaleTimeString()}
+                    </span>
                   </div>
-                  
-                  <span className="packet-time">
-                    {new Date(packet.timestamp).toLocaleTimeString()}
-                  </span>
-                </div>
-              ))}
+                ))}
             </>
           )}
         </div>

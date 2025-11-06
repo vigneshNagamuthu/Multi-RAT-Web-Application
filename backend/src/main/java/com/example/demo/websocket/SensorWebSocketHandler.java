@@ -11,10 +11,7 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -23,23 +20,25 @@ import java.util.concurrent.TimeUnit;
 public class SensorWebSocketHandler extends TextWebSocketHandler {
 
     private final Set<WebSocketSession> sessions = Collections.synchronizedSet(new HashSet<>());
-    private final ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper = new ObjectMapper();
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     private boolean isSchedulerStarted = false;
 
+    // Recent buffer (last 100 packets) for rolling statistics
+    private final List<SensorPacket> packetBuffer = new ArrayList<>();
+
+    // ✅ Running totals (lifetime)
+    private int totalPacketsReceived = 0;
+    private long totalLostPackets = 0;
+
     @Autowired(required = false)
     private MPTCPPacketService mptcpPacketService;
-
-    public SensorWebSocketHandler() {
-        this.objectMapper = new ObjectMapper();
-    }
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         sessions.add(session);
         System.out.println("✅ Sensor WebSocket connected: " + session.getId());
-        
-        // Start sending packets every 500ms (only once)
+
         if (!isSchedulerStarted) {
             startSendingPackets();
             isSchedulerStarted = true;
@@ -54,33 +53,88 @@ public class SensorWebSocketHandler extends TextWebSocketHandler {
 
     private void startSendingPackets() {
         scheduler.scheduleAtFixedRate(() -> {
-            if (sessions.isEmpty()) {
-                return;
-            }
+            if (sessions.isEmpty()) return;
 
-            // ONLY send packets if MPTCP capture is active
             if (mptcpPacketService != null && mptcpPacketService.isCapturing()) {
-                List<SensorPacket> packets = mptcpPacketService.getRecentPackets(5);
-                
-                if (!packets.isEmpty()) {
-                    System.out.println("📡 Sending " + packets.size() + " REAL packets to frontend");
-                    
-                    try {
-                        String json = objectMapper.writeValueAsString(packets);
-                        
-                        synchronized (sessions) {
-                            for (WebSocketSession session : sessions) {
-                                if (session.isOpen()) {
-                                    session.sendMessage(new TextMessage(json));
-                                }
-                            }
+                List<SensorPacket> recentPackets = mptcpPacketService.getRecentPackets(5);
+
+                if (!recentPackets.isEmpty()) {
+                    synchronized (packetBuffer) {
+                        // Add new packets to history
+                        packetBuffer.addAll(recentPackets);
+                        totalPacketsReceived += recentPackets.size();
+
+                        // ✅ Count new lost packets (add to lifetime total)
+                        long newlyLost = recentPackets.stream()
+                                .filter(SensorPacket::isLost)
+                                .count();
+                        totalLostPackets += newlyLost;
+
+                        // Trim buffer to last 100 packets
+                        if (packetBuffer.size() > 100) {
+                            packetBuffer.subList(0, packetBuffer.size() - 100).clear();
                         }
-                    } catch (IOException e) {
-                        e.printStackTrace();
+
+                        // ---- Calculate rolling (recent) loss rate ----
+                        int visiblePackets = packetBuffer.size();
+                        long recentLostCount = packetBuffer.stream()
+                                .filter(SensorPacket::isLost)
+                                .count();
+                        double recentLossRate = visiblePackets > 0
+                                ? (recentLostCount * 100.0 / visiblePackets)
+                                : 0.0;
+
+                        // ---- Calculate lifetime loss rate ----
+                        double lifetimeLossRate = totalPacketsReceived > 0
+                                ? (totalLostPackets * 100.0 / totalPacketsReceived)
+                                : 0.0;
+
+                        // ---- Build JSON payload ----
+                        Map<String, Object> payload = new HashMap<>();
+                        payload.put("packets", recentPackets);      // only latest packets
+                        payload.put("total", totalPacketsReceived);  // lifetime total
+                        payload.put("lost", totalLostPackets);       // lifetime lost
+                        payload.put("lossRate", lifetimeLossRate);   // lifetime loss %
+                        payload.put("recentLossRate", recentLossRate); // rolling 100 window
+
+                        // ---- Send JSON to frontend ----
+                        try {
+                            String json = objectMapper.writeValueAsString(payload);
+                            broadcastToAll(json);
+
+                            // Console log for debugging
+                            System.out.printf("📊 Sent to UI | Total: %d | Lost: %d | Lifetime Loss: %.2f%% | Recent: %.2f%%%n",
+                                    totalPacketsReceived, totalLostPackets, lifetimeLossRate, recentLossRate);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
             }
-            // If capture is NOT active, don't send anything (no dummy data!)
         }, 0, 500, TimeUnit.MILLISECONDS);
+    }
+
+    private void broadcastToAll(String json) {
+        synchronized (sessions) {
+            for (WebSocketSession session : sessions) {
+                if (session.isOpen()) {
+                    try {
+                        session.sendMessage(new TextMessage(json));
+                    } catch (IOException e) {
+                        System.err.println("⚠️ Failed to send WebSocket message to " + session.getId());
+                    }
+                }
+            }
+        }
+    }
+
+    // Reset everything when /api/sensor/reset is called
+    public void clearPackets() {
+        synchronized (packetBuffer) {
+            packetBuffer.clear();
+        }
+        totalPacketsReceived = 0;
+        totalLostPackets = 0;
+        System.out.println("🧹 Cleared packet buffer and reset all counters.");
     }
 }
