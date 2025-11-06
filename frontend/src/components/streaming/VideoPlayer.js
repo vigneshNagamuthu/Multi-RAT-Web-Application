@@ -36,10 +36,9 @@ export default function VideoPlayer() {
       
       console.log('✅ Backend streaming started');
       
-      // Wait longer for stream to initialize and first HLS segments to be created
-      // At 10fps, it takes ~4-5 seconds for first segment
+      // Reduce wait time - segments generate fast with copy mode
       console.log('⏳ Waiting for stream to initialize...');
-      await new Promise(resolve => setTimeout(resolve, 8000));
+      await new Promise(resolve => setTimeout(resolve, 3000));
       
       console.log('🎥 Setting up HLS player with URL:', HLS_URL);
       
@@ -48,15 +47,19 @@ export default function VideoPlayer() {
         console.log('✅ HLS.js is supported');
         const hls = new Hls({
           enableWorker: true,
-          lowLatencyMode: false,  // Disable for better stability with slow streams
-          backBufferLength: 90,
+          lowLatencyMode: true,  // Enable low-latency mode
+          backBufferLength: 10,  // Minimize back buffer
+          maxBufferLength: 10,   // Keep buffer small for low latency
+          maxMaxBufferLength: 15,
+          liveSyncDurationCount: 2,  // Stay close to live edge
+          liveMaxLatencyDurationCount: 3,
           debug: true,
-          manifestLoadingTimeOut: 20000,  // 20 seconds timeout
-          manifestLoadingMaxRetry: 4,
-          manifestLoadingRetryDelay: 2000,
-          levelLoadingTimeOut: 20000,
-          levelLoadingMaxRetry: 4,
-          levelLoadingRetryDelay: 2000
+          manifestLoadingTimeOut: 10000,
+          manifestLoadingMaxRetry: 3,
+          manifestLoadingRetryDelay: 1000,
+          levelLoadingTimeOut: 10000,
+          levelLoadingMaxRetry: 3,
+          levelLoadingRetryDelay: 1000
         });
         
         hls.loadSource(HLS_URL);

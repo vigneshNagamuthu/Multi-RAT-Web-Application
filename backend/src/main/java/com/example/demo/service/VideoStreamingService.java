@@ -90,8 +90,10 @@ public class VideoStreamingService {
                 // Linux - Auto-detect video device
                 String videoDevice = detectLinuxVideoDevice();
                 System.out.println("📹 Using video device: " + videoDevice);
+                System.out.println("🔀 Using MPTCP for streaming with scheduler: " + getCurrentScheduler());
                 
                 pb = new ProcessBuilder(
+                    "mptcpize", "run",  // Wrap with MPTCP
                     "ffmpeg",
                     "-f", "v4l2",
                     "-input_format", "mjpeg",  // Use MJPEG format for 30fps support
@@ -254,6 +256,22 @@ public class VideoStreamingService {
         if (currentFps == 0) return 0;
         double totalFrames = currentFps * 10; // Last 10 seconds
         return (droppedFrames / totalFrames) * 100;
+    }
+
+    /**
+     * Get current MPTCP scheduler
+     */
+    private String getCurrentScheduler() {
+        try {
+            ProcessBuilder pb = new ProcessBuilder("sysctl", "-n", "net.mptcp.scheduler");
+            Process process = pb.start();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String scheduler = reader.readLine();
+            process.waitFor();
+            return scheduler != null ? scheduler.trim() : "unknown";
+        } catch (Exception e) {
+            return "unknown";
+        }
     }
 
     /**
