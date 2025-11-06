@@ -1,45 +1,35 @@
 package com.example.demo.controller;
 
-import com.example.demo.model.SensorPacket;
-import com.example.demo.service.DummyDataGenerator;
 import com.example.demo.service.IPerfService;
+import com.example.demo.service.MPTCPPacketService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/sensor")
 @CrossOrigin(origins = "*")
 public class SensorController {
-
-    private final DummyDataGenerator dataGenerator;
     
     @Autowired
     private IPerfService iperfService;
 
-    public SensorController(DummyDataGenerator dataGenerator) {
-        this.dataGenerator = dataGenerator;
-    }
-
-    @GetMapping("/packets")
-    public ResponseEntity<List<SensorPacket>> getPackets(
-            @RequestParam(defaultValue = "10") int count) {
-        List<SensorPacket> packets = dataGenerator.generateSensorPackets(count);
-        return ResponseEntity.ok(packets);
-    }
+    @Autowired(required = false)
+    private MPTCPPacketService mptcpPacketService;
 
     @PostMapping("/reset")
     public ResponseEntity<Map<String, Object>> resetSequence() {
-        dataGenerator.resetSequence();
+        // Only reset MPTCP service
+        if (mptcpPacketService != null) {
+            mptcpPacketService.resetSequence();
+        }
         
         Map<String, Object> response = new HashMap<>();
         response.put("status", "success");
         response.put("message", "Sequence reset to 0");
-        response.put("currentSequence", dataGenerator.getCurrentSequence());
         
         return ResponseEntity.ok(response);
     }
@@ -50,9 +40,13 @@ public class SensorController {
         response.put("scheduler", "Redundant");
         response.put("port", iperfService.getPort());
         response.put("server", iperfService.getServerIp());
-        response.put("currentSequence", dataGenerator.getCurrentSequence());
         response.put("active", true);
         response.put("iperfRunning", iperfService.isRunning());
+        
+        // Add MPTCP capture status
+        if (mptcpPacketService != null) {
+            response.put("mptcpCapturing", mptcpPacketService.isCapturing());
+        }
         
         return ResponseEntity.ok(response);
     }
@@ -66,12 +60,19 @@ public class SensorController {
         boolean started = iperfService.startIPerf(duration);
         
         if (started) {
+            // ALSO automatically start MPTCP capture
+            if (mptcpPacketService != null) {
+                mptcpPacketService.startCapture();
+                System.out.println("✅ Auto-started MPTCP packet capture");
+            }
+            
             response.put("status", "success");
-            response.put("message", "iperf3 traffic started to AWS server");
+            response.put("message", "iperf3 traffic started and packet capture enabled");
             response.put("server", iperfService.getServerIp());
             response.put("port", iperfService.getPort());
             response.put("duration", duration);
             response.put("scheduler", "Redundant");
+            response.put("realDataEnabled", true);
             return ResponseEntity.ok(response);
         } else {
             response.put("status", "error");
@@ -84,9 +85,15 @@ public class SensorController {
     public ResponseEntity<Map<String, String>> stopIPerf() {
         iperfService.stopIPerf();
         
+        // ALSO stop MPTCP capture
+        if (mptcpPacketService != null) {
+            mptcpPacketService.stopCapture();
+            System.out.println("🛑 Auto-stopped MPTCP packet capture");
+        }
+        
         Map<String, String> response = new HashMap<>();
         response.put("status", "success");
-        response.put("message", "iperf3 traffic stopped");
+        response.put("message", "iperf3 traffic stopped and packet capture disabled");
         
         return ResponseEntity.ok(response);
     }

@@ -1,7 +1,5 @@
 package com.example.demo.websocket;
 
-import com.example.demo.model.StreamMetrics;
-import com.example.demo.service.DummyDataGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
@@ -11,68 +9,44 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 @Component
 public class StreamingWebSocketHandler extends TextWebSocketHandler {
 
     private final Set<WebSocketSession> sessions = Collections.synchronizedSet(new HashSet<>());
-    private final DummyDataGenerator dataGenerator;
     private final ObjectMapper objectMapper;
-    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-    private boolean isSchedulerStarted = false;
-    private boolean useRealMetrics = false;
+    private boolean isStreaming = false;
 
-    public StreamingWebSocketHandler(DummyDataGenerator dataGenerator) {
-        this.dataGenerator = dataGenerator;
+    public StreamingWebSocketHandler() {
         this.objectMapper = new ObjectMapper();
     }
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         sessions.add(session);
-        System.out.println("Streaming WebSocket connected: " + session.getId());
+        System.out.println("✅ Streaming WebSocket connected: " + session.getId());
         
-        // Start sending metrics every 1 second (only once)
-        if (!isSchedulerStarted) {
-            startSendingMetrics();
-            isSchedulerStarted = true;
+        // Send initial "stopped" status to new clients
+        if (!isStreaming) {
+            sendStoppedStatus();
         }
     }
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
         sessions.remove(session);
-        System.out.println("Streaming WebSocket disconnected: " + session.getId());
-    }
-
-    private void startSendingMetrics() {
-        scheduler.scheduleAtFixedRate(() -> {
-            if (sessions.isEmpty() || useRealMetrics) {
-                return; // Skip dummy data if using real metrics
-            }
-
-            StreamMetrics metrics = dataGenerator.generateStreamMetrics();
-            
-            try {
-                String json = objectMapper.writeValueAsString(metrics);
-                sendToAllSessions(json);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }, 0, 1, TimeUnit.SECONDS);
+        System.out.println("❌ Streaming WebSocket disconnected: " + session.getId());
     }
 
     /**
      * Send real metrics from FFmpeg (called by VideoStreamingService)
      */
     public void sendMetricsToClients(Map<String, Object> metrics) {
-        useRealMetrics = true;
+        isStreaming = true;
         
         try {
             String json = objectMapper.writeValueAsString(metrics);
@@ -83,10 +57,37 @@ public class StreamingWebSocketHandler extends TextWebSocketHandler {
     }
 
     /**
-     * Stop real metrics and go back to dummy data
+     * Stop real metrics and clear display
      */
     public void stopRealMetrics() {
-        useRealMetrics = false;
+        System.out.println("🛑 Stopping real metrics");
+        isStreaming = false;
+        sendStoppedStatus();
+    }
+
+    /**
+     * Send stopped status with all metrics at 0
+     */
+    private void sendStoppedStatus() {
+        try {
+            Map<String, Object> stoppedMetrics = new HashMap<>();
+            stoppedMetrics.put("frameRate", 0);
+            stoppedMetrics.put("bitrate", 0);
+            stoppedMetrics.put("droppedFrames", 0);
+            stoppedMetrics.put("latency", 0);
+            stoppedMetrics.put("packetLoss", 0);
+            stoppedMetrics.put("scheduler", "LRTT");
+            stoppedMetrics.put("port", 6060);
+            stoppedMetrics.put("status", "stopped");
+            stoppedMetrics.put("timestamp", System.currentTimeMillis());
+            
+            String json = objectMapper.writeValueAsString(stoppedMetrics);
+            sendToAllSessions(json);
+            
+            System.out.println("✅ Stopped status sent - metrics cleared to 0");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private void sendToAllSessions(String message) {

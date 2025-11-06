@@ -1,8 +1,9 @@
 package com.example.demo.websocket;
 
 import com.example.demo.model.SensorPacket;
-import com.example.demo.service.DummyDataGenerator;
+import com.example.demo.service.MPTCPPacketService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
@@ -22,20 +23,21 @@ import java.util.concurrent.TimeUnit;
 public class SensorWebSocketHandler extends TextWebSocketHandler {
 
     private final Set<WebSocketSession> sessions = Collections.synchronizedSet(new HashSet<>());
-    private final DummyDataGenerator dataGenerator;
     private final ObjectMapper objectMapper;
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     private boolean isSchedulerStarted = false;
 
-    public SensorWebSocketHandler(DummyDataGenerator dataGenerator) {
-        this.dataGenerator = dataGenerator;
+    @Autowired(required = false)
+    private MPTCPPacketService mptcpPacketService;
+
+    public SensorWebSocketHandler() {
         this.objectMapper = new ObjectMapper();
     }
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         sessions.add(session);
-        System.out.println("Sensor WebSocket connected: " + session.getId());
+        System.out.println("✅ Sensor WebSocket connected: " + session.getId());
         
         // Start sending packets every 500ms (only once)
         if (!isSchedulerStarted) {
@@ -47,7 +49,7 @@ public class SensorWebSocketHandler extends TextWebSocketHandler {
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
         sessions.remove(session);
-        System.out.println("Sensor WebSocket disconnected: " + session.getId());
+        System.out.println("❌ Sensor WebSocket disconnected: " + session.getId());
     }
 
     private void startSendingPackets() {
@@ -56,22 +58,29 @@ public class SensorWebSocketHandler extends TextWebSocketHandler {
                 return;
             }
 
-            // Send 5 packets at a time
-            List<SensorPacket> packets = dataGenerator.generateSensorPackets(5);
-            
-            try {
-                String json = objectMapper.writeValueAsString(packets);
+            // ONLY send packets if MPTCP capture is active
+            if (mptcpPacketService != null && mptcpPacketService.isCapturing()) {
+                List<SensorPacket> packets = mptcpPacketService.getRecentPackets(5);
                 
-                synchronized (sessions) {
-                    for (WebSocketSession session : sessions) {
-                        if (session.isOpen()) {
-                            session.sendMessage(new TextMessage(json));
+                if (!packets.isEmpty()) {
+                    System.out.println("📡 Sending " + packets.size() + " REAL packets to frontend");
+                    
+                    try {
+                        String json = objectMapper.writeValueAsString(packets);
+                        
+                        synchronized (sessions) {
+                            for (WebSocketSession session : sessions) {
+                                if (session.isOpen()) {
+                                    session.sendMessage(new TextMessage(json));
+                                }
+                            }
                         }
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
                 }
-            } catch (IOException e) {
-                e.printStackTrace();
             }
+            // If capture is NOT active, don't send anything (no dummy data!)
         }, 0, 500, TimeUnit.MILLISECONDS);
     }
 }

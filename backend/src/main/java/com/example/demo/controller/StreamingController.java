@@ -1,7 +1,5 @@
 package com.example.demo.controller;
 
-import com.example.demo.model.StreamMetrics;
-import com.example.demo.service.DummyDataGenerator;
 import com.example.demo.service.VideoStreamingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -14,21 +12,9 @@ import java.util.Map;
 @RequestMapping("/api/streaming")
 @CrossOrigin(origins = "*")
 public class StreamingController {
-
-    private final DummyDataGenerator dataGenerator;
     
     @Autowired
     private VideoStreamingService videoStreamingService;
-
-    public StreamingController(DummyDataGenerator dataGenerator) {
-        this.dataGenerator = dataGenerator;
-    }
-
-    @GetMapping("/metrics")
-    public ResponseEntity<StreamMetrics> getMetrics() {
-        StreamMetrics metrics = dataGenerator.generateStreamMetrics();
-        return ResponseEntity.ok(metrics);
-    }
 
     @PostMapping("/start")
     public ResponseEntity<Map<String, Object>> startStream() {
@@ -69,6 +55,36 @@ public class StreamingController {
         response.put("port", videoStreamingService.getPort());
         response.put("scheduler", "LRTT");
         
+        // Include real-time metrics if streaming
+        if (videoStreamingService.isStreaming()) {
+            response.put("currentFps", videoStreamingService.getCurrentFps());
+            response.put("currentBitrate", videoStreamingService.getCurrentBitrate());
+            response.put("droppedFrames", videoStreamingService.getDroppedFrames());
+        }
+        
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/metrics")
+    public ResponseEntity<Map<String, Object>> getCurrentMetrics() {
+        Map<String, Object> metrics = new HashMap<>();
+        
+        if (videoStreamingService.isStreaming()) {
+            metrics.put("frameRate", (int) videoStreamingService.getCurrentFps());
+            metrics.put("bitrate", videoStreamingService.getCurrentBitrate());
+            metrics.put("droppedFrames", videoStreamingService.getDroppedFrames());
+            metrics.put("scheduler", "LRTT");
+            metrics.put("port", videoStreamingService.getPort());
+            metrics.put("status", "streaming");
+        } else {
+            metrics.put("frameRate", 0);
+            metrics.put("bitrate", 0);
+            metrics.put("droppedFrames", 0);
+            metrics.put("scheduler", "LRTT");
+            metrics.put("port", videoStreamingService.getPort());
+            metrics.put("status", "stopped");
+        }
+        
+        return ResponseEntity.ok(metrics);
     }
 }

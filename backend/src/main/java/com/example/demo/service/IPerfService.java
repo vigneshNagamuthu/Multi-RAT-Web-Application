@@ -8,13 +8,16 @@ import java.io.InputStreamReader;
 @Service
 public class IPerfService {
     
-    private static final String AWS_SERVER = "54.169.114.206";
+    private static final String AWS_SERVER = "13.212.221.200";  // Updated to new server!
     private static final int SENSOR_PORT = 5000;
     
     private Process iperfProcess;
     private boolean isRunning = false;
     private Thread outputThread;
 
+    /**
+     * Start iperf3 traffic to AWS server
+     */
     public synchronized boolean startIPerf(int duration) {
         if (isRunning) {
             System.out.println("⚠️ iperf3 is already running");
@@ -22,19 +25,39 @@ public class IPerfService {
         }
 
         try {
-            String command = String.format(
-                "iperf3 -c %s -p %d -t %d -i 1 -b 10M",
-                AWS_SERVER, SENSOR_PORT, duration
-            );
+            // Detect OS for proper command
+            String os = System.getProperty("os.name").toLowerCase();
             
             System.out.println("🚀 Starting iperf3 to AWS: " + AWS_SERVER + ":" + SENSOR_PORT);
+            System.out.println("🖥️  Detected OS: " + os);
             
-            ProcessBuilder pb = new ProcessBuilder("bash", "-c", command);
+            ProcessBuilder pb;
+            
+            if (os.contains("win")) {
+                // Windows
+                pb = new ProcessBuilder(
+                    "cmd", "/c",
+                    String.format("iperf3 -c %s -p %d -t %d -i 1 -b 10M", 
+                        AWS_SERVER, SENSOR_PORT, duration)
+                );
+            } else {
+                // Mac/Linux
+                pb = new ProcessBuilder(
+                    "iperf3",
+                    "-c", AWS_SERVER,
+                    "-p", String.valueOf(SENSOR_PORT),
+                    "-t", String.valueOf(duration),
+                    "-i", "1",
+                    "-b", "10M"
+                );
+            }
+            
             pb.redirectErrorStream(true);
             
             iperfProcess = pb.start();
             isRunning = true;
             
+            // Start thread to read output
             outputThread = new Thread(() -> readIPerfOutput());
             outputThread.start();
             
@@ -49,6 +72,9 @@ public class IPerfService {
         }
     }
 
+    /**
+     * Stop iperf3 traffic
+     */
     public synchronized void stopIPerf() {
         if (iperfProcess != null && iperfProcess.isAlive()) {
             iperfProcess.destroy();
@@ -62,12 +88,16 @@ public class IPerfService {
         isRunning = false;
     }
 
+    /**
+     * Read and log iperf3 output
+     */
     private void readIPerfOutput() {
         try (BufferedReader reader = new BufferedReader(
                 new InputStreamReader(iperfProcess.getInputStream()))) {
             
             String line;
             while ((line = reader.readLine()) != null) {
+                // Log iperf3 output
                 System.out.println("[iperf3] " + line);
             }
             
