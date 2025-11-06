@@ -94,6 +94,7 @@ public class VideoStreamingService {
                 pb = new ProcessBuilder(
                     "ffmpeg",
                     "-f", "v4l2",
+                    "-input_format", "mjpeg",  // Use MJPEG format for 30fps support
                     "-framerate", "30",
                     "-video_size", "1280x720",
                     "-i", videoDevice,
