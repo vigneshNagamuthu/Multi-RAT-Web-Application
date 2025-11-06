@@ -55,7 +55,10 @@ const tcpServer = net.createServer((socket) => {
 
   const args = [
     '-i', 'pipe:0',  // Read from stdin
-    '-c:v', 'copy',
+    '-c:v', 'libx264',  // Re-encode with main profile for compatibility
+    '-profile:v', 'main',
+    '-pix_fmt', 'yuv420p',  // Convert to 4:2:0 for better compatibility
+    '-preset', 'ultrafast',
     '-f', 'hls',
     '-hls_time', '2',
     '-hls_list_size', '3',

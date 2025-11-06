@@ -36,9 +36,9 @@ export default function VideoPlayer() {
       
       console.log('✅ Backend streaming started');
       
-      // Wait a bit for stream to initialize
+      // Wait a bit for stream to initialize and first HLS segments to be created
       console.log('⏳ Waiting for stream to initialize...');
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      await new Promise(resolve => setTimeout(resolve, 6000));
       
       console.log('🎥 Setting up HLS player with URL:', HLS_URL);
       
