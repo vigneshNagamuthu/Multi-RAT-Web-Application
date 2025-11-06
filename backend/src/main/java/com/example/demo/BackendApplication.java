@@ -16,7 +16,8 @@ import org.springframework.lang.NonNull;
 @ComponentScan(basePackages = {
     "com.example.demo.controller",
     "com.example.demo.service",
-    "com.example.demo.model"
+    "com.example.demo.model",
+    "com.example.demo.websocket"  // ✅ ADDED THIS - Required for WebSocket handlers
 })
 public class BackendApplication implements CommandLineRunner {
 
@@ -33,6 +34,11 @@ public class BackendApplication implements CommandLineRunner {
         applicationContext.getBean(RequestMappingHandlerMapping.class)
             .getHandlerMethods()
             .forEach((key, value) -> System.out.println("👉 " + key));
+        
+        System.out.println("\n✅ WebSocket Endpoints Available:");
+        System.out.println("   📹 ws://localhost:8080/ws/streaming (Port 6060 - LRTT)");
+        System.out.println("   📡 ws://localhost:8080/ws/sensor (Port 5000 - Redundant)");
+        System.out.println("\n🚀 Backend is ready!\n");
     }
 
     // ✅ Enable global CORS for frontend access
@@ -41,9 +47,10 @@ public class BackendApplication implements CommandLineRunner {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(@NonNull CorsRegistry registry) {
-                registry.addMapping("/api/**")
-                        .allowedOrigins("http://localhost:3000")
-                        .allowedMethods("GET", "POST", "PUT", "DELETE");
+                registry.addMapping("/**")  // Changed from "/api/**" to allow WebSocket CORS
+                        .allowedOrigins("http://localhost:3000", "http://localhost:5173")  // Added Vite port
+                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                        .allowedHeaders("*");
             }
         };
     }
