@@ -103,6 +103,7 @@ public class VideoStreamingService {
                     "-vcodec", "libx264",
                     "-preset", "ultrafast",
                     "-tune", "zerolatency",
+                    "-r", "30",  // Force output framerate
                     "-b:v", "2M",
                     "-maxrate", "2M",
                     "-bufsize", "4M",
