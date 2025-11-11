@@ -74,4 +74,46 @@ public class SensorWebSocketHandler extends TextWebSocketHandler {
             }
         }, 0, 500, TimeUnit.MILLISECONDS);
     }
+    
+    // Broadcast single packet to all clients
+    public void broadcastPacket(SensorPacket packet) {
+        try {
+            java.util.Map<String, Object> message = new java.util.HashMap<>();
+            message.put("type", "packet");
+            message.put("data", packet);
+            
+            String json = objectMapper.writeValueAsString(message);
+            
+            synchronized (sessions) {
+                for (WebSocketSession session : sessions) {
+                    if (session.isOpen()) {
+                        session.sendMessage(new TextMessage(json));
+                    }
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    // Broadcast status update to all clients
+    public void broadcastStatus(java.util.Map<String, Object> status) {
+        try {
+            java.util.Map<String, Object> message = new java.util.HashMap<>();
+            message.put("type", "status");
+            message.put("data", status);
+            
+            String json = objectMapper.writeValueAsString(message);
+            
+            synchronized (sessions) {
+                for (WebSocketSession session : sessions) {
+                    if (session.isOpen()) {
+                        session.sendMessage(new TextMessage(json));
+                    }
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }

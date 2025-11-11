@@ -98,7 +98,7 @@ const tcpServer = net.createServer((socket) => {
     if (ffmpegProcess) {
       ffmpegProcess.kill();
     }
-    
+
     // Clean up HLS files immediately when stream stops
     console.log('🧹 Cleaning up HLS segments...');
     if (fs.existsSync(HLS_DIR)) {
