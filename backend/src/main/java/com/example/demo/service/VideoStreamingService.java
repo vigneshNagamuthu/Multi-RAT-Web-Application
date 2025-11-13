@@ -279,52 +279,121 @@ public class VideoStreamingService {
      * Auto-detect available video device on Linux
      */
     private String detectLinuxVideoDevice() {
+        System.out.println("🔍 Scanning for video capture devices...");
+        
         try {
-            // Check common video device paths
-            for (int i = 0; i < 10; i++) {
-                String devicePath = "/dev/video" + i;
-                java.io.File device = new java.io.File(devicePath);
+            // First, try using v4l2-ctl to get proper device info
+            ProcessBuilder pb = new ProcessBuilder("bash", "-c", "v4l2-ctl --list-devices 2>/dev/null");
+            Process process = pb.start();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String line;
+            String currentDevice = null;
+            
+            while ((line = reader.readLine()) != null) {
+                line = line.trim();
                 
-                if (device.exists()) {
-                    // Verify it's a valid video capture device using v4l2-ctl
-                    try {
-                        ProcessBuilder pb = new ProcessBuilder("v4l2-ctl", "--device=" + devicePath, "--list-formats");
-                        Process process = pb.start();
-                        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-                        String line;
-                        boolean isCapture = false;
-                        
-                        while ((line = reader.readLine()) != null) {
-                            // Check if device supports video capture
-                            if (line.toLowerCase().contains("video capture") || 
-                                line.toLowerCase().contains("motion-jpeg") ||
-                                line.toLowerCase().contains("yuyv") ||
-                                line.toLowerCase().contains("h264")) {
-                                isCapture = true;
-                                break;
-                            }
-                        }
-                        
-                        process.waitFor();
-                        
-                        if (isCapture) {
-                            System.out.println("✅ Found valid video capture device: " + devicePath);
-                            return devicePath;
-                        }
-                    } catch (Exception e) {
-                        // v4l2-ctl might not be installed, fall back to first device found
-                        System.out.println("⚠️ v4l2-ctl not available, using first video device found");
+                // Device name line (contains ':' and no '/dev/')
+                if (line.contains(":") && !line.contains("/dev/")) {
+                    currentDevice = line;
+                }
+                // Device path line (starts with /dev/video)
+                else if (line.startsWith("/dev/video")) {
+                    String devicePath = line.trim();
+                    
+                    // Verify it's a capture device (not metadata)
+                    if (isValidCaptureDevice(devicePath)) {
+                        System.out.println("✅ Found: " + currentDevice + " at " + devicePath);
                         return devicePath;
+                    } else {
+                        System.out.println("⏭️  Skipped: " + devicePath + " (metadata/not capture)");
                     }
                 }
             }
+            process.waitFor();
         } catch (Exception e) {
-            System.err.println("⚠️ Error detecting video device: " + e.getMessage());
+            System.out.println("⚠️ v4l2-ctl not available, trying manual scan...");
         }
         
-        // Fallback to /dev/video0
-        System.out.println("⚠️ No video device detected, falling back to /dev/video0");
-        return "/dev/video0";
+        // Fallback: Manual scan
+        System.out.println("🔍 Manual scanning /dev/video* devices...");
+        for (int i = 0; i < 20; i++) {
+            String devicePath = "/dev/video" + i;
+            java.io.File device = new java.io.File(devicePath);
+            
+            if (device.exists() && isValidCaptureDevice(devicePath)) {
+                System.out.println("✅ Found valid capture device: " + devicePath);
+                return devicePath;
+            }
+        }
+        
+        // Last resort
+        System.err.println("❌ No valid video capture device found!");
+        System.err.println("💡 Please check: ls -la /dev/video*");
+        System.err.println("💡 Or run: v4l2-ctl --list-devices");
+        return "/dev/video0";  // Will likely fail, but let FFmpeg give proper error
+    }
+    
+    /**
+     * Verify if device is a valid video capture device (not metadata)
+     */
+    private boolean isValidCaptureDevice(String devicePath) {
+        try {
+            // Use v4l2-ctl to check capabilities
+            ProcessBuilder pb = new ProcessBuilder("v4l2-ctl", "--device=" + devicePath, "--all");
+            Process process = pb.start();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String line;
+            boolean hasVideoCapture = false;
+            boolean isMetadata = false;
+            
+            while ((line = reader.readLine()) != null) {
+                String lowerLine = line.toLowerCase();
+                
+                // Check if it's a metadata device (skip these!)
+                if (lowerLine.contains("metadata") || lowerLine.contains("v4l2_meta")) {
+                    isMetadata = true;
+                    break;
+                }
+                
+                // Check if it has video capture capability
+                if (lowerLine.contains("video capture") && !lowerLine.contains("metadata")) {
+                    hasVideoCapture = true;
+                }
+            }
+            
+            process.waitFor();
+            return hasVideoCapture && !isMetadata;
+            
+        } catch (Exception e) {
+            // If v4l2-ctl fails, try a simpler test with FFmpeg
+            try {
+                ProcessBuilder pb = new ProcessBuilder(
+                    "ffmpeg", "-f", "v4l2", "-list_formats", "all", "-i", devicePath
+                );
+                Process process = pb.start();
+                
+                // Read stderr (FFmpeg outputs format list to stderr)
+                BufferedReader errorReader = new BufferedReader(
+                    new InputStreamReader(process.getErrorStream())
+                );
+                String line;
+                boolean hasFormats = false;
+                
+                while ((line = errorReader.readLine()) != null) {
+                    if (line.contains("Compressed") || line.contains("Raw") || 
+                        line.contains("YUYV") || line.contains("MJPEG")) {
+                        hasFormats = true;
+                        break;
+                    }
+                }
+                
+                process.waitFor();
+                return hasFormats;
+                
+            } catch (Exception e2) {
+                return false;
+            }
+        }
     }
 
     public boolean isStreaming() {
