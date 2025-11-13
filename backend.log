@@ -1,0 +1,102 @@
+[[1;34mINFO[m] Scanning for projects...
+[[1;34mINFO[m] 
+[[1;34mINFO[m] [1m--------------------------< [0;36mcom.example:demo[0;1m >--------------------------[m
+[[1;34mINFO[m] [1mBuilding backend 0.0.1-SNAPSHOT[m
+[[1;34mINFO[m]   from pom.xml
+[[1;34mINFO[m] [1m--------------------------------[ jar ]---------------------------------[m
+[[1;34mINFO[m] 
+[[1;34mINFO[m] [1m>>> [0;32mspring-boot:3.5.0:run[m [1m(default-cli)[0;1m > [0;1mtest-compile[m @ [36mdemo[0;1m >>>[m
+[[1;34mINFO[m] 
+[[1;34mINFO[m] [1m--- [0;32mresources:3.3.1:resources[m [1m(default-resources)[m @ [36mdemo[0;1m ---[m
+[[1;34mINFO[m] Copying 1 resource from src/main/resources to target/classes
+[[1;34mINFO[m] Copying 0 resource from src/main/resources to target/classes
+[[1;34mINFO[m] 
+[[1;34mINFO[m] [1m--- [0;32mcompiler:3.14.0:compile[m [1m(default-compile)[m @ [36mdemo[0;1m ---[m
+[[1;34mINFO[m] Nothing to compile - all classes are up to date.
+[[1;34mINFO[m] 
+[[1;34mINFO[m] [1m--- [0;32mresources:3.3.1:testResources[m [1m(default-testResources)[m @ [36mdemo[0;1m ---[m
+[[1;34mINFO[m] skip non existing resourceDirectory /home/dan/Documents/GitHub/Multi-RAT-Web-Application/backend/src/test/resources
+[[1;34mINFO[m] 
+[[1;34mINFO[m] [1m--- [0;32mcompiler:3.14.0:testCompile[m [1m(default-testCompile)[m @ [36mdemo[0;1m ---[m
+[[1;34mINFO[m] Nothing to compile - all classes are up to date.
+[[1;34mINFO[m] 
+[[1;34mINFO[m] [1m<<< [0;32mspring-boot:3.5.0:run[m [1m(default-cli)[0;1m < [0;1mtest-compile[m @ [36mdemo[0;1m <<<[m
+[[1;34mINFO[m] 
+[[1;34mINFO[m] 
+[[1;34mINFO[m] [1m--- [0;32mspring-boot:3.5.0:run[m [1m(default-cli)[m @ [36mdemo[0;1m ---[m
+[[1;34mINFO[m] Attaching agents: []
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.5.0)
+
+2025-11-13T14:44:13.960+08:00  INFO 16000 --- [backend] [           main] com.example.demo.BackendApplication      : Starting BackendApplication using Java 21.0.8 with PID 16000 (/home/dan/Documents/GitHub/Multi-RAT-Web-Application/backend/target/classes started by dan in /home/dan/Documents/GitHub/Multi-RAT-Web-Application/backend)
+2025-11-13T14:44:13.961+08:00  INFO 16000 --- [backend] [           main] com.example.demo.BackendApplication      : No active profile set, falling back to 1 default profile: "default"
+2025-11-13T14:44:14.342+08:00  INFO 16000 --- [backend] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2025-11-13T14:44:14.350+08:00  INFO 16000 --- [backend] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2025-11-13T14:44:14.350+08:00  INFO 16000 --- [backend] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.41]
+2025-11-13T14:44:14.371+08:00  INFO 16000 --- [backend] [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2025-11-13T14:44:14.371+08:00  INFO 16000 --- [backend] [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 393 ms
+2025-11-13T14:44:14.537+08:00  INFO 16000 --- [backend] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
+2025-11-13T14:44:14.541+08:00  INFO 16000 --- [backend] [           main] com.example.demo.BackendApplication      : Started BackendApplication in 0.782 seconds (process running for 0.908)
+
+🔍 Registered Spring Endpoints:
+👉 {GET [/api/scheduler/config]}
+👉 {GET [/api/schedulers]}
+👉 {GET [/api/sensor/tcp/status]}
+👉 { [/error]}
+👉 {GET [/api/sensor/status]}
+👉 { [/error], produces [text/html]}
+👉 {POST [/api/sensor/iperf/start]}
+👉 {POST [/api/sensor/tcp/stop]}
+👉 {GET [/api/scheduler/current]}
+👉 {POST [/api/streaming/start]}
+👉 {POST [/api/sensor/tcp/reset]}
+👉 {GET [/api/sensor/packets]}
+👉 {GET [/api/streaming/status]}
+👉 {POST [/api/streaming/stop]}
+👉 {POST [/api/sensor/iperf/stop]}
+👉 {GET [/api/streaming/metrics]}
+👉 {POST [/api/sensor/reset]}
+👉 {POST [/api/sensor/tcp/start]}
+
+✅ WebSocket Endpoints Available:
+   📹 ws://localhost:8080/ws/streaming (Port 6060 - LRTT)
+   📡 ws://localhost:8080/ws/sensor (Port 5000 - Redundant)
+
+🚀 Backend is ready!
+
+2025-11-13T14:44:15.304+08:00  INFO 16000 --- [backend] [nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-11-13T14:44:15.304+08:00  INFO 16000 --- [backend] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2025-11-13T14:44:15.305+08:00  INFO 16000 --- [backend] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 1 ms
+Sensor WebSocket connected: de54824e-0ab5-d005-7bf6-d12f7fa4061d
+Sensor WebSocket connected: ed632890-d5eb-5f2a-8d2f-386ef9e6aeab
+📡 Connecting to AWS server: 13.212.221.200:5000
+👂 Listening for packet acknowledgments...
+✅ TCP packet transmission started
+📤 Sent 100 packets
+📥 Received 100 packets (Avg latency: 5ms)
+📤 Sent 200 packets
+📥 Received 200 packets (Avg latency: 4ms)
+📤 Sent 300 packets
+📥 Received 300 packets (Avg latency: 5ms)
+📤 Sent 400 packets
+📥 Received 400 packets (Avg latency: 5ms)
+📤 Sent 500 packets
+📥 Received 500 packets (Avg latency: 5ms)
+📤 Sent 600 packets
+📥 Received 600 packets (Avg latency: 6ms)
+📤 Sent 700 packets
+📥 Received 700 packets (Avg latency: 6ms)
+📤 Sent 800 packets
+📥 Received 800 packets (Avg latency: 5ms)
+🛑 TCP packet transmission stopped
+2025-11-13T14:56:13.523+08:00  INFO 16000 --- [backend] [ionShutdownHook] o.s.b.w.e.tomcat.GracefulShutdown        : Commencing graceful shutdown. Waiting for active requests to complete
+2025-11-13T14:56:13.530+08:00  INFO 16000 --- [backend] [tomcat-shutdown] o.s.b.w.e.tomcat.GracefulShutdown        : Graceful shutdown complete
+Sensor WebSocket disconnected: ed632890-d5eb-5f2a-8d2f-386ef9e6aeab
+Sensor WebSocket disconnected: de54824e-0ab5-d005-7bf6-d12f7fa4061d
