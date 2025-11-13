@@ -305,27 +305,30 @@ public class VideoStreamingService {
                 // Device name line (contains ':' and no '/dev/')
                 if (line.contains(":") && !line.contains("/dev/")) {
                     currentDevice = line;
+                    System.out.println("📹 Found device: " + currentDevice);
                 }
                 // Device path line (starts with /dev/video)
                 else if (line.startsWith("/dev/video")) {
                     String devicePath = line.trim();
+                    System.out.println("   Testing: " + devicePath);
                     
                     // Verify it's a capture device (not metadata)
                     if (isValidCaptureDevice(devicePath)) {
                         System.out.println("✅ Found: " + currentDevice + " at " + devicePath);
                         return devicePath;
                     } else {
-                        System.out.println("⏭️  Skipped: " + devicePath + " (metadata/not capture)");
+                        System.out.println("   ⏭️  Skipped: " + devicePath + " (metadata/not capture)");
                     }
                 }
             }
             process.waitFor();
+            System.out.println("⚠️ v4l2-ctl scan complete, no valid devices found");
         } catch (Exception e) {
-            System.out.println("⚠️ v4l2-ctl not available, trying manual scan...");
+            System.out.println("⚠️ v4l2-ctl not available: " + e.getMessage());
         }
         
         // Fallback: Manual scan using FFmpeg directly
-        System.out.println("🔍 Manual scanning /dev/video* devices...");
+        System.out.println("🔍 Manual scanning /dev/video* devices with FFmpeg...");
         for (int i = 0; i < 20; i++) {
             String devicePath = "/dev/video" + i;
             java.io.File device = new java.io.File(devicePath);
@@ -338,16 +341,34 @@ public class VideoStreamingService {
                     System.out.println("✅ Found valid capture device: " + devicePath);
                     return devicePath;
                 } else {
-                    System.out.println("⏭️  Skipped " + devicePath + " (not a valid capture device)");
+                    System.out.println("   ⏭️  Skipped " + devicePath + " (not a valid capture device)");
                 }
+            } else {
+                System.out.println("   ⏭️  " + devicePath + " does not exist");
             }
         }
         
-        // Last resort
+        // Last resort - list what's actually there
         System.err.println("❌ No valid video capture device found!");
-        System.err.println("💡 Please check: ls -la /dev/video*");
-        System.err.println("💡 Or run: v4l2-ctl --list-devices");
-        return "/dev/video0";  // Will likely fail, but let FFmpeg give proper error
+        System.err.println("💡 Listing all /dev/video* devices:");
+        try {
+            ProcessBuilder pb = new ProcessBuilder("bash", "-c", "ls -la /dev/video* 2>&1");
+            Process process = pb.start();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                System.err.println("   " + line);
+            }
+            process.waitFor();
+        } catch (Exception e) {
+            System.err.println("   Could not list devices: " + e.getMessage());
+        }
+        
+        System.err.println("💡 Try manually: v4l2-ctl --list-devices");
+        System.err.println("💡 Or check permissions: ls -la /dev/video*");
+        System.err.println("💡 User needs to be in 'video' group: sudo usermod -a -G video $USER");
+        
+        throw new RuntimeException("No valid video capture device found! Please check camera connection and permissions.");
     }
     
     /**
@@ -441,13 +462,16 @@ public class VideoStreamingService {
             String line;
             boolean hasValidFormats = false;
             boolean isMetadata = false;
+            StringBuilder output = new StringBuilder();
             
             while ((line = errorReader.readLine()) != null) {
                 String lowerLine = line.toLowerCase();
+                output.append(line).append("\n");
                 
                 // Skip metadata devices
                 if (lowerLine.contains("metadata") || lowerLine.contains("meta")) {
                     isMetadata = true;
+                    System.out.println("      ⚠️ Metadata device detected");
                     break;
                 }
                 
@@ -456,13 +480,30 @@ public class VideoStreamingService {
                     lowerLine.contains("yuyv") || lowerLine.contains("mjpeg") ||
                     lowerLine.contains("h264") || lowerLine.contains("nv12")) {
                     hasValidFormats = true;
+                    System.out.println("      ✓ Found valid format: " + line.trim());
+                }
+                
+                // Check for permission/access errors
+                if (lowerLine.contains("permission denied") || lowerLine.contains("cannot open")) {
+                    System.err.println("      ❌ Permission error: " + line.trim());
                 }
             }
             
             process.waitFor();
+            
+            if (!hasValidFormats && !isMetadata) {
+                System.out.println("      ❌ No valid formats found. FFmpeg output:");
+                for (String outputLine : output.toString().split("\n")) {
+                    if (!outputLine.trim().isEmpty()) {
+                        System.out.println("         " + outputLine);
+                    }
+                }
+            }
+            
             return hasValidFormats && !isMetadata;
             
         } catch (Exception e) {
+            System.err.println("      ❌ FFmpeg test failed: " + e.getMessage());
             return false;
         }
     }
