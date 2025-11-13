@@ -92,23 +92,33 @@ public class VideoStreamingService {
                 System.out.println("📹 Using video device: " + videoDevice);
                 System.out.println("🔀 Using MPTCP for streaming with scheduler: " + getCurrentScheduler());
                 
+                // Try to detect best format and framerate for the camera
+                String[] formatInfo = detectBestFormat(videoDevice);
+                String inputFormat = formatInfo[0];
+                String maxFps = formatInfo[1];
+                
+                System.out.println("📹 Best format: " + inputFormat + " at " + maxFps + " FPS");
+                
+                int fps = Integer.parseInt(maxFps);
+                int gopSize = fps * 2; // Keyframe every 2 seconds
+                
                 pb = new ProcessBuilder(
                     "mptcpize", "run",  // Wrap with MPTCP
                     "ffmpeg",
                     "-f", "v4l2",
-                    "-input_format", "mjpeg",  // Use MJPEG format for 30fps support
-                    "-framerate", "30",
+                    "-input_format", inputFormat,
+                    "-framerate", maxFps,
                     "-video_size", "1280x720",
                     "-i", videoDevice,
                     "-vcodec", "libx264",
                     "-preset", "ultrafast",
                     "-tune", "zerolatency",
-                    "-r", "30",  // Force output framerate
+                    "-r", maxFps,  // Match input framerate
                     "-b:v", "2M",
                     "-maxrate", "2M",
                     "-bufsize", "4M",
-                    "-g", "60",
-                    "-keyint_min", "60",
+                    "-g", String.valueOf(gopSize),
+                    "-keyint_min", String.valueOf(gopSize),
                     "-f", "mpegts",
                     "tcp://" + AWS_SERVER + ":" + VIDEO_PORT
                 );
@@ -314,15 +324,22 @@ public class VideoStreamingService {
             System.out.println("⚠️ v4l2-ctl not available, trying manual scan...");
         }
         
-        // Fallback: Manual scan
+        // Fallback: Manual scan using FFmpeg directly
         System.out.println("🔍 Manual scanning /dev/video* devices...");
         for (int i = 0; i < 20; i++) {
             String devicePath = "/dev/video" + i;
             java.io.File device = new java.io.File(devicePath);
             
-            if (device.exists() && isValidCaptureDevice(devicePath)) {
-                System.out.println("✅ Found valid capture device: " + devicePath);
-                return devicePath;
+            if (device.exists()) {
+                System.out.println("📹 Checking " + devicePath + "...");
+                
+                // Test with FFmpeg directly (works without v4l2-ctl)
+                if (testDeviceWithFFmpeg(devicePath)) {
+                    System.out.println("✅ Found valid capture device: " + devicePath);
+                    return devicePath;
+                } else {
+                    System.out.println("⏭️  Skipped " + devicePath + " (not a valid capture device)");
+                }
             }
         }
         
@@ -331,6 +348,123 @@ public class VideoStreamingService {
         System.err.println("💡 Please check: ls -la /dev/video*");
         System.err.println("💡 Or run: v4l2-ctl --list-devices");
         return "/dev/video0";  // Will likely fail, but let FFmpeg give proper error
+    }
+    
+    /**
+     * Detect best video format and framerate for a camera
+     * Returns [format, fps] e.g. ["mjpeg", "30"] or ["yuyv422", "18"]
+     */
+    private String[] detectBestFormat(String devicePath) {
+        // Default fallback
+        String[] defaultFormat = {"mjpeg", "30"};
+        
+        try {
+            ProcessBuilder pb = new ProcessBuilder(
+                "ffmpeg", "-f", "v4l2", "-list_formats", "all", "-i", devicePath
+            );
+            Process process = pb.start();
+            
+            // Read stderr (FFmpeg outputs to stderr)
+            BufferedReader reader = new BufferedReader(
+                new InputStreamReader(process.getErrorStream())
+            );
+            
+            String line;
+            String bestFormat = "mjpeg";
+            int maxFps = 18;
+            
+            while ((line = reader.readLine()) != null) {
+                String lowerLine = line.toLowerCase();
+                
+                // Look for format lines like:
+                // [video4linux2,v4l2 @ 0x...] [0] : yuyv422 : ... 640x480 @ 30fps
+                // [video4linux2,v4l2 @ 0x...] [1] : mjpeg : ... 1280x720 @ 30fps
+                
+                if (lowerLine.contains("mjpeg") || lowerLine.contains("yuyv")) {
+                    // Check if it mentions 1280x720 or similar resolution
+                    boolean isGoodResolution = lowerLine.contains("1280x720") || 
+                                              lowerLine.contains("1920x1080") ||
+                                              lowerLine.contains("640x480");
+                    
+                    if (isGoodResolution) {
+                        // Try to extract FPS
+                        if (lowerLine.contains("fps") || lowerLine.contains("@")) {
+                            String[] parts = line.split("@|fps");
+                            for (String part : parts) {
+                                try {
+                                    String numStr = part.trim().split("\\s+")[0].replaceAll("[^0-9.]", "");
+                                    if (!numStr.isEmpty()) {
+                                        int fps = (int) Double.parseDouble(numStr);
+                                        if (fps > maxFps && fps <= 60) {
+                                            maxFps = fps;
+                                            if (lowerLine.contains("mjpeg")) {
+                                                bestFormat = "mjpeg";
+                                            } else if (lowerLine.contains("yuyv")) {
+                                                bestFormat = "yuyv422";
+                                            }
+                                        }
+                                    }
+                                } catch (Exception e) {
+                                    // Skip parsing errors
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            process.waitFor();
+            
+            System.out.println("🔍 Camera supports: " + bestFormat + " at " + maxFps + " FPS");
+            return new String[]{bestFormat, String.valueOf(maxFps)};
+            
+        } catch (Exception e) {
+            System.out.println("⚠️ Could not detect camera formats, using defaults: mjpeg@30fps");
+            return defaultFormat;
+        }
+    }
+    
+    /**
+     * Test device with FFmpeg (works without v4l2-ctl)
+     */
+    private boolean testDeviceWithFFmpeg(String devicePath) {
+        try {
+            ProcessBuilder pb = new ProcessBuilder(
+                "ffmpeg", "-f", "v4l2", "-list_formats", "all", "-i", devicePath
+            );
+            Process process = pb.start();
+            
+            // Read stderr (FFmpeg outputs format list to stderr)
+            BufferedReader errorReader = new BufferedReader(
+                new InputStreamReader(process.getErrorStream())
+            );
+            String line;
+            boolean hasValidFormats = false;
+            boolean isMetadata = false;
+            
+            while ((line = errorReader.readLine()) != null) {
+                String lowerLine = line.toLowerCase();
+                
+                // Skip metadata devices
+                if (lowerLine.contains("metadata") || lowerLine.contains("meta")) {
+                    isMetadata = true;
+                    break;
+                }
+                
+                // Check for valid video formats
+                if (lowerLine.contains("compressed") || lowerLine.contains("raw") || 
+                    lowerLine.contains("yuyv") || lowerLine.contains("mjpeg") ||
+                    lowerLine.contains("h264") || lowerLine.contains("nv12")) {
+                    hasValidFormats = true;
+                }
+            }
+            
+            process.waitFor();
+            return hasValidFormats && !isMetadata;
+            
+        } catch (Exception e) {
+            return false;
+        }
     }
     
     /**
