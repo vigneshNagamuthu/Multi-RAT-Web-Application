@@ -1,7 +1,5 @@
 package com.example.demo.controller;
 
-import com.example.demo.model.StreamMetrics;
-import com.example.demo.service.DummyDataGenerator;
 import com.example.demo.service.VideoStreamingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -15,20 +13,8 @@ import java.util.Map;
 @CrossOrigin(origins = "*")
 public class StreamingController {
 
-    private final DummyDataGenerator dataGenerator;
-    
     @Autowired
     private VideoStreamingService videoStreamingService;
-
-    public StreamingController(DummyDataGenerator dataGenerator) {
-        this.dataGenerator = dataGenerator;
-    }
-
-    @GetMapping("/metrics")
-    public ResponseEntity<StreamMetrics> getMetrics() {
-        StreamMetrics metrics = dataGenerator.generateStreamMetrics();
-        return ResponseEntity.ok(metrics);
-    }
 
     @PostMapping("/start")
     public ResponseEntity<Map<String, Object>> startStream() {

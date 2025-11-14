@@ -16,7 +16,7 @@ echo "=============================================="
 echo ""
 
 # Check if running from project root
-if [ ! -f "package.json" ] || [ ! -d "backend" ] || [ ! -d "frontend" ]; then
+if [ ! -d "backend" ] || [ ! -d "frontend" ] || [ ! -f "setup.sh" ]; then
     echo "❌ Error: Please run this script from the project root directory"
     exit 1
 fi
@@ -79,12 +79,33 @@ else
     MISSING_DEPS+=("FFmpeg (sudo apt install ffmpeg)")
 fi
 
+# Check socat (required for MPTCP sensor packets)
+if command -v socat &> /dev/null; then
+    echo "✅ socat detected"
+else
+    echo "❌ socat not found (required for MPTCP sensor testing)"
+    MISSING_DEPS+=("socat (sudo apt install socat)")
+fi
+
 # Check MPTCP
 if command -v mptcpize &> /dev/null; then
     echo "✅ mptcpize detected"
 else
-    echo "⚠️  mptcpize not found (optional for MPTCP support)"
-    echo "   Install from: https://github.com/multipath-tcp/mptcpd"
+    echo "❌ mptcpize not found (required for MPTCP support)"
+    MISSING_DEPS+=("mptcpize (sudo apt install mptcpize)")
+fi
+
+# Check MPTCP kernel support
+if [ -f /proc/sys/net/mptcp/enabled ]; then
+    MPTCP_ENABLED=$(cat /proc/sys/net/mptcp/enabled)
+    if [ "$MPTCP_ENABLED" = "1" ]; then
+        echo "✅ MPTCP enabled in kernel"
+    else
+        echo "⚠️  MPTCP disabled in kernel"
+        echo "   Enable with: sudo sysctl -w net.mptcp.enabled=1"
+    fi
+else
+    echo "⚠️  MPTCP not supported by kernel"
 fi
 
 # Check v4l2-ctl (optional)

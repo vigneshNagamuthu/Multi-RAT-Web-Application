@@ -1,6 +1,5 @@
 package com.example.demo.service;
 
-import com.example.demo.model.SensorPacket;
 import com.example.demo.websocket.SensorWebSocketHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -15,6 +14,7 @@ public class TcpPacketSenderService {
     
     private final String AWS_SERVER = "13.212.221.200";
     private final int AWS_PORT = 5000;
+    private final int LOCAL_PROXY_PORT = 5001; // Local MPTCP proxy
     
     @Autowired
     private SensorWebSocketHandler webSocketHandler;
@@ -23,6 +23,7 @@ public class TcpPacketSenderService {
     private Socket socket;
     private PrintWriter out;
     private BufferedReader in;
+    private Process proxyProcess;
     
     private boolean isRunning = false;
     private int sentPackets = 0;
@@ -41,9 +42,21 @@ public class TcpPacketSenderService {
         }
         
         try {
-            // Connect to AWS server
-            System.out.println("📡 Connecting to AWS server: " + AWS_SERVER + ":" + AWS_PORT);
-            socket = new Socket(AWS_SERVER, AWS_PORT);
+            // Connect to AWS server using MPTCP via socat proxy
+            System.out.println("📡 Connecting to AWS server with MPTCP: " + AWS_SERVER + ":" + AWS_PORT);
+            
+            // Start local MPTCP proxy using socat
+            startMptcpProxy();
+            
+            // Give proxy time to start
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            
+            // Connect to local proxy which forwards to AWS with MPTCP
+            socket = new Socket("127.0.0.1", 5001); // Local proxy port
             out = new PrintWriter(socket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             
@@ -99,7 +112,100 @@ public class TcpPacketSenderService {
             System.err.println("Error closing connection: " + e.getMessage());
         }
         
+        // Stop MPTCP proxy
+        stopMptcpProxy();
+        
         System.out.println("🛑 TCP packet transmission stopped");
+    }
+    
+    /**
+     * Start local MPTCP proxy using socat
+     * Forwards local connections to AWS with MPTCP
+     * Uses sourceport=5000 for custom MPTCP scheduler routing
+     */
+    private void startMptcpProxy() {
+        // Stop any existing proxy first
+        stopMptcpProxy();
+        
+        // Kill any lingering socat processes on port 5001 and release port 5000
+        try {
+            ProcessBuilder killSocat = new ProcessBuilder("bash", "-c", 
+                "pkill -f 'socat.*" + LOCAL_PROXY_PORT + "' || true");
+            killSocat.start().waitFor(1, TimeUnit.SECONDS);
+            
+            // Also kill any processes using source port 5000
+            ProcessBuilder killPort5000 = new ProcessBuilder("bash", "-c",
+                "fuser -k 5000/tcp || true");
+            killPort5000.start().waitFor(1, TimeUnit.SECONDS);
+            
+            Thread.sleep(500); // Give OS time to release the ports
+        } catch (Exception e) {
+            // Ignore cleanup errors
+        }
+        
+        try {
+            // Use socat to create MPTCP proxy with port 5000 for scheduler routing
+            // sourceport=5000 needed for custom MPTCP scheduler to identify sensor traffic
+            // SO_REUSEADDR allows immediate rebinding after stop
+            ProcessBuilder pb = new ProcessBuilder(
+                "bash", "-c",
+                "mptcpize run socat TCP-LISTEN:" + LOCAL_PROXY_PORT + 
+                ",reuseaddr,fork TCP:" + AWS_SERVER + ":" + AWS_PORT + 
+                ",sourceport=5000,reuseaddr"
+            );
+            
+            pb.redirectErrorStream(true);
+            proxyProcess = pb.start();
+            
+            System.out.println("✅ MPTCP proxy started on port " + LOCAL_PROXY_PORT);
+            System.out.println("   Forwarding to " + AWS_SERVER + ":" + AWS_PORT + " with source port 5000");
+            System.out.println("   🎯 Using port 5000 for custom MPTCP scheduler routing");
+            
+            // Monitor proxy output in background
+            new Thread(() -> {
+                try (BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(proxyProcess.getInputStream()))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        if (line.contains("error") || line.contains("Error")) {
+                            System.err.println("[MPTCP Proxy] " + line);
+                        }
+                    }
+                } catch (IOException e) {
+                    // Ignore - proxy stopped
+                }
+            }).start();
+            
+        } catch (IOException e) {
+            System.err.println("❌ Failed to start MPTCP proxy: " + e.getMessage());
+            System.err.println("💡 Make sure 'socat' and 'mptcpize' are installed");
+        }
+    }
+    
+    /**
+     * Stop MPTCP proxy
+     */
+    private void stopMptcpProxy() {
+        if (proxyProcess != null && proxyProcess.isAlive()) {
+            proxyProcess.destroy();
+            try {
+                if (!proxyProcess.waitFor(2, TimeUnit.SECONDS)) {
+                    proxyProcess.destroyForcibly();
+                }
+            } catch (InterruptedException e) {
+                proxyProcess.destroyForcibly();
+            }
+            System.out.println("🛑 MPTCP proxy stopped");
+        }
+        
+        // Force kill any lingering socat processes
+        try {
+            ProcessBuilder killSocat = new ProcessBuilder("bash", "-c", 
+                "pkill -f 'socat.*" + LOCAL_PROXY_PORT + "' || true");
+            killSocat.start().waitFor(1, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            // Ignore cleanup errors
+        }
     }
     
     private void sendPacket() {

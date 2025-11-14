@@ -1,7 +1,5 @@
 package com.example.demo.websocket;
 
-import com.example.demo.model.StreamMetrics;
-import com.example.demo.service.DummyDataGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
@@ -14,35 +12,17 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 @Component
 public class StreamingWebSocketHandler extends TextWebSocketHandler {
 
     private final Set<WebSocketSession> sessions = Collections.synchronizedSet(new HashSet<>());
-    private final DummyDataGenerator dataGenerator;
-    private final ObjectMapper objectMapper;
-    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-    private boolean isSchedulerStarted = false;
-    private boolean useRealMetrics = false;
-
-    public StreamingWebSocketHandler(DummyDataGenerator dataGenerator) {
-        this.dataGenerator = dataGenerator;
-        this.objectMapper = new ObjectMapper();
-    }
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         sessions.add(session);
         System.out.println("Streaming WebSocket connected: " + session.getId());
-        
-        // Start sending metrics every 1 second (only once)
-        if (!isSchedulerStarted) {
-            startSendingMetrics();
-            isSchedulerStarted = true;
-        }
     }
 
     @Override
@@ -51,29 +31,10 @@ public class StreamingWebSocketHandler extends TextWebSocketHandler {
         System.out.println("Streaming WebSocket disconnected: " + session.getId());
     }
 
-    private void startSendingMetrics() {
-        scheduler.scheduleAtFixedRate(() -> {
-            if (sessions.isEmpty() || useRealMetrics) {
-                return; // Skip dummy data if using real metrics
-            }
-
-            StreamMetrics metrics = dataGenerator.generateStreamMetrics();
-            
-            try {
-                String json = objectMapper.writeValueAsString(metrics);
-                sendToAllSessions(json);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }, 0, 1, TimeUnit.SECONDS);
-    }
-
     /**
      * Send real metrics from FFmpeg (called by VideoStreamingService)
      */
     public void sendMetricsToClients(Map<String, Object> metrics) {
-        useRealMetrics = true;
-        
         try {
             String json = objectMapper.writeValueAsString(metrics);
             sendToAllSessions(json);
@@ -83,10 +44,10 @@ public class StreamingWebSocketHandler extends TextWebSocketHandler {
     }
 
     /**
-     * Stop real metrics and go back to dummy data
+     * Called when streaming stops
      */
     public void stopRealMetrics() {
-        useRealMetrics = false;
+        // Placeholder for future cleanup if needed
     }
 
     private void sendToAllSessions(String message) {

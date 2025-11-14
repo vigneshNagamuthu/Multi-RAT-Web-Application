@@ -16,8 +16,7 @@ import org.springframework.lang.NonNull;
 @ComponentScan(basePackages = {
     "com.example.demo.controller",
     "com.example.demo.service",
-    "com.example.demo.model",
-    "com.example.demo.websocket"  // ✅ ADDED THIS - Required for WebSocket handlers
+    "com.example.demo.websocket"  // Required for WebSocket handlers
 })
 public class BackendApplication implements CommandLineRunner {
 

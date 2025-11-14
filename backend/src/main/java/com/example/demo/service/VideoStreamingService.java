@@ -16,11 +16,13 @@ public class VideoStreamingService {
 
     private static final String AWS_SERVER = "13.212.221.200";
     private static final int VIDEO_PORT = 6060;
+    private static final int VIDEO_PROXY_PORT = 6062; // Local MPTCP proxy for video (avoiding 6061 used by AWS HLS)
 
     @Autowired(required = false)
     private StreamingWebSocketHandler webSocketHandler;
 
     private Process streamProcess;
+    private Process videoProxyProcess;
     private boolean isStreaming = false;
     private Thread outputThread;
 
@@ -44,6 +46,16 @@ public class VideoStreamingService {
 
             System.out.println("🎥 Starting video stream to AWS: " + AWS_SERVER + ":" + VIDEO_PORT);
             System.out.println("🖥️  Detected OS: " + os);
+            
+            // Start MPTCP proxy for video (Linux only)
+            if (os.contains("linux") || os.contains("nix") || os.contains("nux")) {
+                startVideoMptcpProxy();
+                try {
+                    Thread.sleep(500); // Give proxy time to start
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
 
             ProcessBuilder pb;
 
@@ -99,8 +111,8 @@ public class VideoStreamingService {
                 String resolution = "640x480";
                 int gopSize = Integer.parseInt(fps) * 2; // keyframe every 2s
 
+                // Connect to local proxy which forwards to AWS with sourceport=6060
                 pb = new ProcessBuilder(
-                    "mptcpize", "run",
                     "ffmpeg",
                     "-f", "v4l2",
                     "-framerate", fps,
@@ -115,7 +127,7 @@ public class VideoStreamingService {
                     "-g", String.valueOf(gopSize),
                     "-keyint_min", String.valueOf(gopSize),
                     "-f", "mpegts",
-                    "tcp://" + AWS_SERVER + ":" + VIDEO_PORT
+                    "tcp://127.0.0.1:" + VIDEO_PROXY_PORT  // Connect to local proxy
                 );
             }
 
@@ -153,6 +165,9 @@ public class VideoStreamingService {
         if (outputThread != null && outputThread.isAlive()) {
             outputThread.interrupt();
         }
+        
+        // Stop video MPTCP proxy
+        stopVideoMptcpProxy();
 
         // Reset metrics
         isStreaming = false;
@@ -160,9 +175,97 @@ public class VideoStreamingService {
         currentBitrate = 0;
         droppedFrames = 0;
 
-        // Tell WebSocket to go back to dummy data
+        // Notify WebSocket that streaming stopped
         if (webSocketHandler != null) {
             webSocketHandler.stopRealMetrics();
+        }
+    }
+    
+    /**
+     * Start local MPTCP proxy for video streaming
+     * Uses sourceport=6060 for custom MPTCP scheduler routing
+     */
+    private void startVideoMptcpProxy() {
+        // Stop any existing proxy first
+        stopVideoMptcpProxy();
+        
+        // Kill any lingering socat processes and release port 6060
+        try {
+            ProcessBuilder killSocat = new ProcessBuilder("bash", "-c", 
+                "pkill -f 'socat.*" + VIDEO_PROXY_PORT + "' || true");
+            killSocat.start().waitFor(1, java.util.concurrent.TimeUnit.SECONDS);
+            
+            // Also kill any processes using source port 6060
+            ProcessBuilder killPort6060 = new ProcessBuilder("bash", "-c",
+                "fuser -k 6060/tcp || true");
+            killPort6060.start().waitFor(1, java.util.concurrent.TimeUnit.SECONDS);
+            
+            Thread.sleep(500); // Give OS time to release the ports
+        } catch (Exception e) {
+            // Ignore cleanup errors
+        }
+        
+        try {
+            // Use socat to create MPTCP proxy with port 6060 for scheduler routing
+            // sourceport=6060 needed for custom MPTCP scheduler to identify video traffic
+            ProcessBuilder pb = new ProcessBuilder(
+                "bash", "-c",
+                "mptcpize run socat TCP-LISTEN:" + VIDEO_PROXY_PORT + 
+                ",reuseaddr,fork TCP:" + AWS_SERVER + ":" + VIDEO_PORT + 
+                ",sourceport=6060,reuseaddr"
+            );
+            
+            pb.redirectErrorStream(true);
+            videoProxyProcess = pb.start();
+            
+            System.out.println("✅ MPTCP video proxy started on port " + VIDEO_PROXY_PORT);
+            System.out.println("   Forwarding to " + AWS_SERVER + ":" + VIDEO_PORT + " with source port 6060");
+            System.out.println("   🎯 Using port 6060 for custom MPTCP scheduler routing (video)");
+            
+            // Monitor proxy output in background
+            new Thread(() -> {
+                try (BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(videoProxyProcess.getInputStream()))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        if (line.contains("error") || line.contains("Error")) {
+                            System.err.println("[MPTCP Video Proxy] " + line);
+                        }
+                    }
+                } catch (Exception e) {
+                    // Ignore - proxy stopped
+                }
+            }).start();
+            
+        } catch (Exception e) {
+            System.err.println("❌ Failed to start MPTCP video proxy: " + e.getMessage());
+            System.err.println("💡 Make sure 'socat' and 'mptcpize' are installed");
+        }
+    }
+    
+    /**
+     * Stop MPTCP video proxy
+     */
+    private void stopVideoMptcpProxy() {
+        if (videoProxyProcess != null && videoProxyProcess.isAlive()) {
+            videoProxyProcess.destroy();
+            try {
+                if (!videoProxyProcess.waitFor(2, java.util.concurrent.TimeUnit.SECONDS)) {
+                    videoProxyProcess.destroyForcibly();
+                }
+            } catch (InterruptedException e) {
+                videoProxyProcess.destroyForcibly();
+            }
+            System.out.println("🛑 MPTCP video proxy stopped");
+        }
+        
+        // Force kill any lingering socat processes
+        try {
+            ProcessBuilder killSocat = new ProcessBuilder("bash", "-c", 
+                "pkill -f 'socat.*" + VIDEO_PROXY_PORT + "' || true");
+            killSocat.start().waitFor(1, java.util.concurrent.TimeUnit.SECONDS);
+        } catch (Exception e) {
+            // Ignore cleanup errors
         }
     }
 
