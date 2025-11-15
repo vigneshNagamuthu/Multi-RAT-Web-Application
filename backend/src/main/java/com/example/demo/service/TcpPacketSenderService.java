@@ -26,6 +26,7 @@ public class TcpPacketSenderService {
     private Process proxyProcess;
     
     private boolean isRunning = false;
+    private boolean useMptcp = true; // NEW: Toggle for MPTCP vs TCP
     private int sentPackets = 0;
     private int receivedPackets = 0;
     private List<Integer> receivedSequences = new CopyOnWriteArrayList<>();
@@ -42,21 +43,28 @@ public class TcpPacketSenderService {
         }
         
         try {
-            // Connect to AWS server using MPTCP via socat proxy
-            System.out.println("📡 Connecting to AWS server with MPTCP: " + AWS_SERVER + ":" + AWS_PORT);
-            
-            // Start local MPTCP proxy using socat
-            startMptcpProxy();
-            
-            // Give proxy time to start
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
+            if (useMptcp) {
+                // MPTCP mode - use socat proxy
+                System.out.println("🔡 Connecting to AWS server with MPTCP: " + AWS_SERVER + ":" + AWS_PORT);
+                
+                // Start local MPTCP proxy using socat
+                startMptcpProxy();
+                
+                // Give proxy time to start
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+                
+                // Connect to local proxy which forwards to AWS with MPTCP
+                socket = new Socket("127.0.0.1", LOCAL_PROXY_PORT);
+            } else {
+                // Standard TCP mode - direct connection
+                System.out.println("🔡 Connecting to AWS server with TCP: " + AWS_SERVER + ":" + AWS_PORT);
+                socket = new Socket(AWS_SERVER, AWS_PORT);
             }
             
-            // Connect to local proxy which forwards to AWS with MPTCP
-            socket = new Socket("127.0.0.1", 5001); // Local proxy port
             out = new PrintWriter(socket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             
@@ -78,12 +86,18 @@ public class TcpPacketSenderService {
             // Start receiver thread
             scheduler.submit(this::receivePackets);
             
-            System.out.println("✅ TCP packet transmission started");
+            System.out.println("✅ Packet transmission started (" + (useMptcp ? "MPTCP" : "TCP") + " mode)");
             return true;
             
         } catch (IOException e) {
             System.err.println("❌ Failed to connect to AWS server: " + e.getMessage());
             isRunning = false;
+            
+            // If MPTCP failed, stop the proxy
+            if (useMptcp) {
+                stopMptcpProxy();
+            }
+            
             return false;
         }
     }
@@ -112,10 +126,12 @@ public class TcpPacketSenderService {
             System.err.println("Error closing connection: " + e.getMessage());
         }
         
-        // Stop MPTCP proxy
-        stopMptcpProxy();
+        // Stop MPTCP proxy if it was used
+        if (useMptcp) {
+            stopMptcpProxy();
+        }
         
-        System.out.println("🛑 TCP packet transmission stopped");
+        System.out.println("🛑 Packet transmission stopped");
     }
     
     /**
@@ -282,6 +298,7 @@ public class TcpPacketSenderService {
     public Map<String, Object> getStatus() {
         Map<String, Object> status = new HashMap<>();
         status.put("isRunning", isRunning);
+        status.put("useMptcp", useMptcp); // NEW: Include MPTCP mode in status
         status.put("sentPackets", sentPackets);
         status.put("receivedPackets", receivedPackets);
         status.put("lostPackets", sentPackets - receivedPackets);
@@ -329,5 +346,19 @@ public class TcpPacketSenderService {
     
     public void setPacketsPerSecond(int rate) {
         this.packetsPerSecond = Math.max(1, Math.min(100, rate)); // Limit 1-100 pps
+    }
+    
+    // NEW: Method to toggle MPTCP mode
+    public void setUseMptcp(boolean useMptcp) {
+        if (!isRunning) {
+            this.useMptcp = useMptcp;
+            System.out.println("📡 Protocol mode set to: " + (useMptcp ? "MPTCP" : "TCP"));
+        } else {
+            System.err.println("⚠️ Cannot change protocol while transmission is running");
+        }
+    }
+    
+    public boolean isUsingMptcp() {
+        return useMptcp;
     }
 }

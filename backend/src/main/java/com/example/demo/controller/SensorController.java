@@ -71,4 +71,26 @@ public class SensorController {
         
         return ResponseEntity.ok(response);
     }
+    
+    // NEW: Endpoint to toggle MPTCP mode
+    @PostMapping("/tcp/set-mptcp")
+    public ResponseEntity<Map<String, Object>> setMptcpMode(
+            @RequestParam boolean useMptcp) {
+        
+        Map<String, Object> response = new HashMap<>();
+        
+        if (tcpPacketSenderService.isRunning()) {
+            response.put("status", "error");
+            response.put("message", "Cannot change protocol while transmission is running. Stop transmission first.");
+            return ResponseEntity.badRequest().body(response);
+        }
+        
+        tcpPacketSenderService.setUseMptcp(useMptcp);
+        
+        response.put("status", "success");
+        response.put("message", "Protocol mode set to: " + (useMptcp ? "MPTCP" : "TCP"));
+        response.put("useMptcp", useMptcp);
+        
+        return ResponseEntity.ok(response);
+    }
 }
