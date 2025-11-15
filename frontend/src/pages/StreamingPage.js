@@ -7,14 +7,17 @@ export default function StreamingPage() {
   const [loading, setLoading] = useState(false);
   const [videoLoaded, setVideoLoaded] = useState(false);
   const [videoError, setVideoError] = useState(null);
-  
-  // Server configuration
-  const serverInfo = { 
-    server: '13.212.221.200', 
-    inputPort: 6060,    // Port for sending stream TO AWS
-    outputPort: 6061    // Port for receiving HLS FROM AWS
+
+  const [devices, setDevices] = useState([]);
+  const [selectedDevice, setSelectedDevice] = useState('');
+
+  // Server configuration (must match your backend / AWS)
+  const serverInfo = {
+    server: '13.212.221.200',
+    inputPort: 6060,  // Port for sending stream TO AWS
+    outputPort: 6061  // Port for receiving HLS FROM AWS
   };
-  
+
   const videoRef = useRef(null);
   const hlsRef = useRef(null);
 
@@ -23,12 +26,25 @@ export default function StreamingPage() {
     fetch('http://localhost:8080/api/streaming/status')
       .then(res => res.json())
       .then(data => {
-        setStreaming(data.isStreaming);
-        if (data.isStreaming) {
-          setTimeout(() => loadVideo(), 2000);
+        if (typeof data.isStreaming === 'boolean') {
+          setStreaming(data.isStreaming);
+          if (data.isStreaming) {
+            setTimeout(() => loadVideo(), 2000);
+          }
         }
       })
       .catch(err => console.error('Error fetching status:', err));
+
+    // Fetch available camera devices
+    fetch('http://localhost:8080/api/streaming/devices')
+      .then(res => res.json())
+      .then(list => {
+        setDevices(list || []);
+        if (list && list.length > 0) {
+          setSelectedDevice(list[0].path);
+        }
+      })
+      .catch(err => console.error('Error fetching devices:', err));
 
     // Cleanup on unmount
     return () => {
@@ -36,16 +52,18 @@ export default function StreamingPage() {
         hlsRef.current.destroy();
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadVideo = () => {
     const video = videoRef.current;
+    if (!video) return;
+
     const hlsUrl = `http://${serverInfo.server}:${serverInfo.outputPort}/hls/stream.m3u8`;
 
-    console.log('📺 Loading HLS stream from AWS:', hlsUrl);
+    console.log('Loading HLS stream from AWS:', hlsUrl);
 
     if (Hls.isSupported()) {
-      // Use HLS.js for browsers that don't natively support HLS
       const hls = new Hls({
         enableWorker: true,
         lowLatencyMode: true,
@@ -63,11 +81,11 @@ export default function StreamingPage() {
       hls.attachMedia(video);
 
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        console.log('✅ HLS manifest loaded successfully');
+        console.log('HLS manifest loaded successfully');
         video.play().then(() => {
           setVideoLoaded(true);
           setVideoError(null);
-          console.log('▶️ Video playback started');
+          console.log('Video playback started');
         }).catch(err => {
           console.error('Error playing video:', err);
           setVideoError('Click play button to start');
@@ -116,30 +134,37 @@ export default function StreamingPage() {
   const handleStartStream = async () => {
     setLoading(true);
     setVideoError(null);
-    
+
     try {
-      const response = await fetch('http://localhost:8080/api/streaming/start', { 
-        method: 'POST' 
+      const body = {
+        devicePath: selectedDevice || null
+      };
+
+      const response = await fetch('http://localhost:8080/api/streaming/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
       });
+
       const data = await response.json();
-      
+
       if (data.status === 'success') {
         setStreaming(true);
         alert(
-          `✅ Streaming Started!\n\n` +
-          `📤 Sending to AWS: ${serverInfo.server}:${serverInfo.inputPort}\n` +
-          `📥 Receiving from: ${serverInfo.server}:${serverInfo.outputPort}\n` +
-          `📡 Scheduler: LRTT (Lowest RTT First)\n\n` +
-          `⏱️ Video will appear in 10-15 seconds...`
+          `Streaming Started!\n\n` +
+          `Sending to AWS: ${serverInfo.server}:${serverInfo.inputPort}\n` +
+          `Receiving from: ${serverInfo.server}:${serverInfo.outputPort}\n` +
+          `Scheduler: LRTT (Lowest RTT First)\n\n` +
+          `Video will appear in 10–15 seconds.`
         );
-        
-        // Wait for stream to stabilize, then load video
+
+        // Wait for stream to stabilise, then load video
         setTimeout(() => {
           loadVideo();
         }, 8000);
       } else {
         alert(
-          `❌ Failed to Start Stream\n\n` +
+          `Failed to Start Stream\n\n` +
           `${data.message}\n\n` +
           `Requirements:\n` +
           `• FFmpeg installed on your computer\n` +
@@ -149,7 +174,7 @@ export default function StreamingPage() {
       }
     } catch (err) {
       console.error('Error starting stream:', err);
-      alert('❌ Error connecting to backend. Make sure backend is running on localhost:8080');
+      alert('Error connecting to backend. Make sure backend is running on localhost:8080');
     } finally {
       setLoading(false);
     }
@@ -157,25 +182,24 @@ export default function StreamingPage() {
 
   const handleStopStream = async () => {
     setLoading(true);
-    
+
     try {
       await fetch('http://localhost:8080/api/streaming/stop', { method: 'POST' });
       setStreaming(false);
       setVideoLoaded(false);
-      
-      // Stop HLS player
+
       if (hlsRef.current) {
         hlsRef.current.destroy();
         hlsRef.current = null;
       }
-      
+
       if (videoRef.current) {
         videoRef.current.pause();
         videoRef.current.src = '';
       }
-      
-      console.log('🛑 Streaming stopped');
-      alert('🛑 Streaming stopped successfully');
+
+      console.log('Streaming stopped');
+      alert('Streaming stopped successfully');
     } catch (err) {
       console.error('Error stopping stream:', err);
     } finally {
@@ -186,12 +210,12 @@ export default function StreamingPage() {
   const handleRetry = () => {
     setVideoError(null);
     setVideoLoaded(false);
-    
+
     if (hlsRef.current) {
       hlsRef.current.destroy();
       hlsRef.current = null;
     }
-    
+
     setTimeout(() => {
       loadVideo();
     }, 1000);
@@ -204,8 +228,8 @@ export default function StreamingPage() {
         <div className="page-header">
           <div className="header-content">
             <div className="header-left">
-              <h2>📹 Video Streaming</h2>
-              <p>Port {serverInfo.inputPort} - LRTT Scheduler (Lowest RTT First)</p>
+              <h2>Video Streaming</h2>
+              <p>Port {serverInfo.inputPort} – LRTT Scheduler (Lowest RTT First)</p>
             </div>
           </div>
         </div>
@@ -217,19 +241,19 @@ export default function StreamingPage() {
             {/* Video Player Card */}
             <div className="video-card">
               <div className="video-header">
-                <h3>📺 Live Stream from AWS</h3>
+                <h3>Live Stream from AWS</h3>
                 <span className={`video-status-badge ${streaming ? (videoLoaded ? 'live' : 'loading') : 'offline'}`}>
-                  {streaming ? (videoLoaded ? '🔴 LIVE' : '⏳ LOADING') : '⚪ OFFLINE'}
+                  {streaming ? (videoLoaded ? 'LIVE' : 'LOADING') : 'OFFLINE'}
                 </span>
               </div>
-              
+
               <div className="video-container">
                 {streaming ? (
                   <>
-                    <video 
-                      ref={videoRef} 
-                      autoPlay 
-                      playsInline 
+                    <video
+                      ref={videoRef}
+                      autoPlay
+                      playsInline
                       muted
                       controls
                       className="video-player"
@@ -243,10 +267,10 @@ export default function StreamingPage() {
                     )}
                     {videoError && (
                       <div className="video-error-overlay">
-                        <div className="error-icon">⚠️</div>
+                        <div className="error-icon">!</div>
                         <p>{videoError}</p>
                         <button onClick={handleRetry} className="retry-btn">
-                          🔄 Retry Connection
+                          Retry Connection
                         </button>
                       </div>
                     )}
@@ -262,10 +286,12 @@ export default function StreamingPage() {
 
               {streaming && videoLoaded && (
                 <div className="video-info">
-                  <span className="info-badge">🌐 {serverInfo.server}:{serverInfo.outputPort}/hls</span>
-                  <span className="info-badge">📡 MPTCP LRTT</span>
-                  <span className="info-badge">🎥 H.264</span>
-                  <span className="info-badge">📺 HLS Stream</span>
+                  <span className="info-badge">
+                    {serverInfo.server}:{serverInfo.outputPort}/hls
+                  </span>
+                  <span className="info-badge">MPTCP LRTT</span>
+                  <span className="info-badge">H.264</span>
+                  <span className="info-badge">HLS Stream</span>
                 </div>
               )}
             </div>
@@ -311,33 +337,62 @@ export default function StreamingPage() {
                   <span className="info-icon">🎥</span>
                   <div>
                     <div className="info-label">Status</div>
-                    <div className="info-value">{streaming ? (videoLoaded ? 'Streaming' : 'Connecting') : 'Inactive'}</div>
+                    <div className="info-value">
+                      {streaming ? (videoLoaded ? 'Streaming' : 'Connecting') : 'Inactive'}
+                    </div>
                   </div>
                 </div>
               </div>
 
+              {/* Camera selector */}
+              <div className="camera-selector">
+                <label htmlFor="camera-select">Camera source</label>
+                <select
+                  id="camera-select"
+                  value={selectedDevice}
+                  onChange={e => setSelectedDevice(e.target.value)}
+                  disabled={streaming || loading || devices.length === 0}
+                >
+                  {devices.length === 0 && (
+                    <option value="">No cameras detected</option>
+                  )}
+                  {devices.map((dev, idx) => (
+                    <option key={dev.path || idx} value={dev.path}>
+                      {dev.name} ({dev.path})
+                    </option>
+                  ))}
+                </select>
+                {devices.length > 1 && (
+                  <p className="camera-hint">
+                    Select your external webcam before starting the stream.
+                  </p>
+                )}
+              </div>
+
               <div className="stream-controls">
-                <button 
-                  onClick={handleStartStream} 
-                  disabled={streaming || loading} 
+                <button
+                  onClick={handleStartStream}
+                  disabled={streaming || loading}
                   className="btn-stream-start"
                 >
-                  {loading && !streaming ? '⏳ Starting...' : '🚀 Start AWS Stream'}
+                  {loading && !streaming ? 'Starting...' : 'Start AWS Stream'}
                 </button>
-                
-                <button 
-                  onClick={handleStopStream} 
-                  disabled={!streaming || loading} 
+
+                <button
+                  onClick={handleStopStream}
+                  disabled={!streaming || loading}
                   className="btn-stream-stop"
                 >
-                  {loading && streaming ? '⏳ Stopping...' : '🛑 Stop Stream'}
+                  {loading && streaming ? 'Stopping...' : 'Stop Stream'}
                 </button>
               </div>
 
               {streaming && (
                 <div className="streaming-notice">
                   <span className="notice-pulse"></span>
-                  <span>Active: Camera → AWS:{serverInfo.inputPort} → Browser:{serverInfo.outputPort}</span>
+                  <span>
+                    Active: Camera → AWS:{serverInfo.inputPort} → Browser:{serverInfo.outputPort}
+                  </span>
                 </div>
               )}
             </div>
@@ -346,11 +401,12 @@ export default function StreamingPage() {
 
         {/* Info Banner */}
         <div className="info-banner">
-          <strong>ℹ️ Stream Flow:</strong> Your camera → FFmpeg → MPTCP (LRTT Scheduler) → 
-          AWS ({serverInfo.server}:{serverInfo.inputPort}) → HLS Conversion → 
+          <strong>Stream Flow:</strong> Your camera → FFmpeg → MPTCP (LRTT Scheduler) →
+          AWS ({serverInfo.server}:{serverInfo.inputPort}) → HLS Conversion →
           Your Browser ({serverInfo.server}:{serverInfo.outputPort}/hls/stream.m3u8)
         </div>
       </div>
     </div>
   );
 }
+

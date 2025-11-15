@@ -2,28 +2,29 @@
 [[1;34mINFO[m] 
 [[1;34mINFO[m] [1m--------------------------< [0;36mcom.example:demo[0;1m >--------------------------[m
 [[1;34mINFO[m] [1mBuilding backend 0.0.1-SNAPSHOT[m
-[[1;34mINFO[m]   from pom.xml
 [[1;34mINFO[m] [1m--------------------------------[ jar ]---------------------------------[m
 [[1;34mINFO[m] 
-[[1;34mINFO[m] [1m>>> [0;32mspring-boot:3.5.0:run[m [1m(default-cli)[0;1m > [0;1mtest-compile[m @ [36mdemo[0;1m >>>[m
+[[1;34mINFO[m] [1m>>> [0;32mspring-boot-maven-plugin:3.5.0:run[m [1m(default-cli)[0;1m > [0;1mtest-compile[m @ [36mdemo[0;1m >>>[m
 [[1;34mINFO[m] 
-[[1;34mINFO[m] [1m--- [0;32mresources:3.3.1:resources[m [1m(default-resources)[m @ [36mdemo[0;1m ---[m
+[[1;34mINFO[m] [1m--- [0;32mmaven-resources-plugin:3.3.1:resources[m [1m(default-resources)[m @ [36mdemo[0;1m ---[m
 [[1;34mINFO[m] Copying 1 resource from src/main/resources to target/classes
 [[1;34mINFO[m] Copying 0 resource from src/main/resources to target/classes
 [[1;34mINFO[m] 
-[[1;34mINFO[m] [1m--- [0;32mcompiler:3.14.0:compile[m [1m(default-compile)[m @ [36mdemo[0;1m ---[m
-[[1;34mINFO[m] Nothing to compile - all classes are up to date.
+[[1;34mINFO[m] [1m--- [0;32mmaven-compiler-plugin:3.14.0:compile[m [1m(default-compile)[m @ [36mdemo[0;1m ---[m
+[[1;34mINFO[m] Recompiling the module because of [1mchanged source code[m.
+[[1;34mINFO[m] Compiling 9 source files with javac [debug parameters release 17] to target/classes
 [[1;34mINFO[m] 
-[[1;34mINFO[m] [1m--- [0;32mresources:3.3.1:testResources[m [1m(default-testResources)[m @ [36mdemo[0;1m ---[m
-[[1;34mINFO[m] skip non existing resourceDirectory /home/dan/Documents/GitHub/Multi-RAT-Web-Application/backend/src/test/resources
+[[1;34mINFO[m] [1m--- [0;32mmaven-resources-plugin:3.3.1:testResources[m [1m(default-testResources)[m @ [36mdemo[0;1m ---[m
+[[1;34mINFO[m] skip non existing resourceDirectory /home/aqmal/Desktop/Multi-RAT-Web-Application/backend/src/test/resources
 [[1;34mINFO[m] 
-[[1;34mINFO[m] [1m--- [0;32mcompiler:3.14.0:testCompile[m [1m(default-testCompile)[m @ [36mdemo[0;1m ---[m
-[[1;34mINFO[m] Nothing to compile - all classes are up to date.
+[[1;34mINFO[m] [1m--- [0;32mmaven-compiler-plugin:3.14.0:testCompile[m [1m(default-testCompile)[m @ [36mdemo[0;1m ---[m
+[[1;34mINFO[m] Recompiling the module because of [1mchanged dependency[m.
+[[1;34mINFO[m] Compiling 1 source file with javac [debug parameters release 17] to target/test-classes
 [[1;34mINFO[m] 
-[[1;34mINFO[m] [1m<<< [0;32mspring-boot:3.5.0:run[m [1m(default-cli)[0;1m < [0;1mtest-compile[m @ [36mdemo[0;1m <<<[m
+[[1;34mINFO[m] [1m<<< [0;32mspring-boot-maven-plugin:3.5.0:run[m [1m(default-cli)[0;1m < [0;1mtest-compile[m @ [36mdemo[0;1m <<<[m
 [[1;34mINFO[m] 
 [[1;34mINFO[m] 
-[[1;34mINFO[m] [1m--- [0;32mspring-boot:3.5.0:run[m [1m(default-cli)[m @ [36mdemo[0;1m ---[m
+[[1;34mINFO[m] [1m--- [0;32mspring-boot-maven-plugin:3.5.0:run[m [1m(default-cli)[m @ [36mdemo[0;1m ---[m
 [[1;34mINFO[m] Attaching agents: []
 
   .   ____          _            __ _ _
@@ -35,30 +36,31 @@
 
  :: Spring Boot ::                (v3.5.0)
 
-2025-11-14T21:58:04.414+08:00  INFO 24661 --- [backend] [           main] com.example.demo.BackendApplication      : Starting BackendApplication using Java 21.0.8 with PID 24661 (/home/dan/Documents/GitHub/Multi-RAT-Web-Application/backend/target/classes started by dan in /home/dan/Documents/GitHub/Multi-RAT-Web-Application/backend)
-2025-11-14T21:58:04.415+08:00  INFO 24661 --- [backend] [           main] com.example.demo.BackendApplication      : No active profile set, falling back to 1 default profile: "default"
-2025-11-14T21:58:04.801+08:00  INFO 24661 --- [backend] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
-2025-11-14T21:58:04.808+08:00  INFO 24661 --- [backend] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
-2025-11-14T21:58:04.808+08:00  INFO 24661 --- [backend] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.41]
-2025-11-14T21:58:04.828+08:00  INFO 24661 --- [backend] [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
-2025-11-14T21:58:04.829+08:00  INFO 24661 --- [backend] [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 393 ms
-2025-11-14T21:58:04.986+08:00  INFO 24661 --- [backend] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
-2025-11-14T21:58:04.990+08:00  INFO 24661 --- [backend] [           main] com.example.demo.BackendApplication      : Started BackendApplication in 0.786 seconds (process running for 0.914)
+2025-11-15T13:44:53.404+08:00  INFO 16312 --- [backend] [           main] com.example.demo.BackendApplication      : Starting BackendApplication using Java 17.0.16 with PID 16312 (/home/aqmal/Desktop/Multi-RAT-Web-Application/backend/target/classes started by aqmal in /home/aqmal/Desktop/Multi-RAT-Web-Application/backend)
+2025-11-15T13:44:53.406+08:00  INFO 16312 --- [backend] [           main] com.example.demo.BackendApplication      : No active profile set, falling back to 1 default profile: "default"
+2025-11-15T13:44:54.137+08:00  INFO 16312 --- [backend] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2025-11-15T13:44:54.148+08:00  INFO 16312 --- [backend] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2025-11-15T13:44:54.149+08:00  INFO 16312 --- [backend] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.41]
+2025-11-15T13:44:54.186+08:00  INFO 16312 --- [backend] [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2025-11-15T13:44:54.188+08:00  INFO 16312 --- [backend] [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 740 ms
+2025-11-15T13:44:54.506+08:00  INFO 16312 --- [backend] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
+2025-11-15T13:44:54.515+08:00  INFO 16312 --- [backend] [           main] com.example.demo.BackendApplication      : Started BackendApplication in 1.472 seconds (process running for 1.726)
 
 🔍 Registered Spring Endpoints:
-👉 {POST [/api/sensor/tcp/stop]}
+👉 {GET [/api/streaming/devices]}
+👉 {GET [/api/sensor/status]}
+👉 {GET [/api/schedulers]}
 👉 {GET [/api/sensor/tcp/status]}
 👉 {POST [/api/sensor/tcp/start]}
-👉 {GET [/api/sensor/status]}
-👉 { [/error], produces [text/html]}
-👉 {GET [/api/schedulers]}
-👉 { [/error]}
+👉 {POST [/api/sensor/tcp/stop]}
 👉 {POST [/api/sensor/tcp/reset]}
-👉 {POST [/api/streaming/stop]}
-👉 {GET [/api/scheduler/current]}
 👉 {GET [/api/scheduler/config]}
-👉 {POST [/api/streaming/start]}
 👉 {GET [/api/streaming/status]}
+👉 { [/error], produces [text/html]}
+👉 {POST [/api/streaming/start]}
+👉 {GET [/api/scheduler/current]}
+👉 { [/error]}
+👉 {POST [/api/streaming/stop]}
 
 ✅ WebSocket Endpoints Available:
    📹 ws://localhost:8080/ws/streaming (Port 6060 - LRTT)
@@ -66,126 +68,492 @@
 
 🚀 Backend is ready!
 
-2025-11-14T21:58:05.876+08:00  INFO 24661 --- [backend] [nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
-2025-11-14T21:58:05.876+08:00  INFO 24661 --- [backend] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
-2025-11-14T21:58:05.877+08:00  INFO 24661 --- [backend] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 0 ms
+2025-11-15T13:44:55.415+08:00  INFO 16312 --- [backend] [nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-11-15T13:44:55.416+08:00  INFO 16312 --- [backend] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2025-11-15T13:44:55.417+08:00  INFO 16312 --- [backend] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 1 ms
+🎦 Devices exposed to UI:
+   - UGREEN Camera: UGREEN Camera (usb-0000:00:14.0-1) (/dev/video2)
+   - UGREEN Camera: UGREEN Camera (usb-0000:00:14.0-1) (/dev/video3)
+   - USB2.0 VGA UVC WebCam: USB2.0 V (usb-0000:00:14.0-6) (/dev/video0)
+   - USB2.0 VGA UVC WebCam: USB2.0 V (usb-0000:00:14.0-6) (/dev/video1)
+🎦 Devices exposed to UI:
+   - UGREEN Camera: UGREEN Camera (usb-0000:00:14.0-1) (/dev/video2)
+   - UGREEN Camera: UGREEN Camera (usb-0000:00:14.0-1) (/dev/video3)
+   - USB2.0 VGA UVC WebCam: USB2.0 V (usb-0000:00:14.0-6) (/dev/video0)
+   - USB2.0 VGA UVC WebCam: USB2.0 V (usb-0000:00:14.0-6) (/dev/video1)
+🎦 Devices exposed to UI:
+   - UGREEN Camera: UGREEN Camera (usb-0000:00:14.0-1) (/dev/video2)
+   - UGREEN Camera: UGREEN Camera (usb-0000:00:14.0-1) (/dev/video3)
+   - USB2.0 VGA UVC WebCam: USB2.0 V (usb-0000:00:14.0-6) (/dev/video0)
+   - USB2.0 VGA UVC WebCam: USB2.0 V (usb-0000:00:14.0-6) (/dev/video1)
 🎥 Starting video stream to AWS: 13.212.221.200:6060
 🖥️  Detected OS: linux
 ✅ MPTCP video proxy started on port 6062
    Forwarding to 13.212.221.200:6060 with source port 6060
    🎯 Using port 6060 for custom MPTCP scheduler routing (video)
-🔍 Scanning for video capture devices...
-📹 Found device: HD Pro Webcam C920 (usb-0000:03:00.0-2):
-   Testing: /dev/video0
-   ⏭️  Skipped: /dev/video0 (metadata/not capture)
-   Testing: /dev/video1
-   ⏭️  Skipped: /dev/video1 (metadata/not capture)
-⚠️ v4l2-ctl scan complete, no valid devices found
-🔍 Manual scanning /dev/video* devices with FFmpeg...
-📹 Checking /dev/video0...
-      ✓ Found valid format: [video4linux2,v4l2 @ 0x63ec574a6180] Raw       :     yuyv422 :           YUYV 4:2:2 : 640x480 160x90 160x120 176x144 320x180 320x240 352x288 432x240 640x360 800x448 800x600 864x480 960x720 1024x576 1280x720 1600x896 1920x1080 2304x1296 2304x1536
-      ✓ Found valid format: [video4linux2,v4l2 @ 0x63ec574a6180] Compressed:       mjpeg :          Motion-JPEG : 640x480 160x90 160x120 176x144 320x180 320x240 352x288 432x240 640x360 800x448 800x600 864x480 960x720 1024x576 1280x720 1600x896 1920x1080
-✅ Found valid capture device: /dev/video0
+📌 Preferred video device requested: /dev/video2
+📹 Using video device: /dev/video2
+🔀 Using MPTCP for streaming with scheduler: clientportsched
+FFmpeg command: ffmpeg -f v4l2 -framerate 30 -video_size 640x480 -i /dev/video2 -vcodec libx264 -preset ultrafast -tune zerolatency -b:v 2M -maxrate 2M -bufsize 4M -g 60 -keyint_min 60 -f mpegts tcp://127.0.0.1:6062
+✅ Video streaming started successfully
+[Metrics] FPS: 0.0 | Bitrate: 0.0 kbps | Dropped: 0
+[Metrics] FPS: 0.0 | Bitrate: 897.2 kbps | Dropped: 0
+[Metrics] FPS: 16.0 | Bitrate: 1028.1 kbps | Dropped: 0
+[Metrics] FPS: 18.0 | Bitrate: 1071.0 kbps | Dropped: 0
+[Metrics] FPS: 20.0 | Bitrate: 1063.5 kbps | Dropped: 0
+[Metrics] FPS: 21.0 | Bitrate: 1125.9 kbps | Dropped: 0
+[Metrics] FPS: 22.0 | Bitrate: 1226.5 kbps | Dropped: 0
+[Metrics] FPS: 22.0 | Bitrate: 1302.4 kbps | Dropped: 0
+[Metrics] FPS: 22.0 | Bitrate: 1343.2 kbps | Dropped: 0
+[Metrics] FPS: 23.0 | Bitrate: 1386.1 kbps | Dropped: 0
+[Metrics] FPS: 23.0 | Bitrate: 1415.3 kbps | Dropped: 0
+[Metrics] FPS: 23.0 | Bitrate: 1478.3 kbps | Dropped: 0
+[Metrics] FPS: 23.0 | Bitrate: 1501.8 kbps | Dropped: 0
+[Metrics] FPS: 23.0 | Bitrate: 1512.9 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1528.9 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1567.7 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1573.5 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1587.9 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1595.0 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1605.9 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1628.8 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1622.2 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1625.7 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1625.1 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1659.1 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1652.5 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1655.8 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1655.3 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1655.3 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1676.7 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1676.1 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1678.7 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1677.4 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1676.5 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1694.7 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1693.7 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1695.2 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1694.0 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1706.9 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1708.1 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1706.2 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1707.1 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1705.5 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1719.5 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1719.1 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1717.9 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1719.1 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1717.9 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1731.2 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1729.9 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1728.8 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1731.3 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1742.2 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1743.9 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1744.2 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1753.0 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1765.7 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1773.7 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1773.2 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1774.8 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1775.7 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1779.7 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1767.5 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1766.2 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1765.3 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1764.7 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1768.2 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1764.8 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1765.0 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1763.9 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1764.0 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1765.9 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1764.4 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1764.7 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1763.3 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1769.5 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1765.5 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1764.3 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1762.8 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1761.5 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1766.7 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1767.3 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1763.7 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1755.5 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1746.8 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1737.8 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1733.4 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1726.8 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1723.0 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1720.1 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1718.1 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1722.0 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1718.0 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1718.6 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1718.1 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1718.4 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1720.5 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1720.1 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1720.3 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1719.5 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1719.7 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1722.5 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1722.8 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1722.1 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1721.4 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1725.7 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1724.4 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1724.6 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1723.7 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1723.0 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1726.8 kbps | Dropped: 0
+🛑 Stopped video streaming to AWS
+🛑 MPTCP video proxy stopped
+📺 Video stream ended
+🎥 Starting video stream to AWS: 13.212.221.200:6060
+🖥️  Detected OS: linux
+✅ MPTCP video proxy started on port 6062
+   Forwarding to 13.212.221.200:6060 with source port 6060
+   🎯 Using port 6060 for custom MPTCP scheduler routing (video)
+📌 Preferred video device requested: /dev/video0
 📹 Using video device: /dev/video0
 🔀 Using MPTCP for streaming with scheduler: clientportsched
 FFmpeg command: ffmpeg -f v4l2 -framerate 30 -video_size 640x480 -i /dev/video0 -vcodec libx264 -preset ultrafast -tune zerolatency -b:v 2M -maxrate 2M -bufsize 4M -g 60 -keyint_min 60 -f mpegts tcp://127.0.0.1:6062
 ✅ Video streaming started successfully
-[Metrics] FPS: 0.0 | Bitrate: 1164.1 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1135.8 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1091.9 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1072.2 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1052.2 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1039.7 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1033.5 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1037.4 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1095.6 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1085.6 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1079.3 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1079.4 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1078.0 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1075.6 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1074.1 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1071.6 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1102.7 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1095.7 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1091.3 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1092.6 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1088.0 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1087.1 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1088.9 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1088.9 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1107.5 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1103.0 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1100.7 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1106.1 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1116.8 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1121.2 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1120.7 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1118.1 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1130.8 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1126.4 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1122.0 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1119.2 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1115.7 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1115.8 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1114.4 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1110.9 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1120.2 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1117.3 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1116.1 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1116.1 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1115.1 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1113.9 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1112.7 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1110.8 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1119.4 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1117.4 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1115.1 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1112.8 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1111.2 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1111.0 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1111.5 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1121.5 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1118.4 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1118.9 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1119.1 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1120.3 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1117.7 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1116.9 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1115.3 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1123.5 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1116.8 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1115.2 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1113.8 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1112.2 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1110.8 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1108.9 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1107.7 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1115.6 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1110.5 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1109.1 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1107.9 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1106.6 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1105.3 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1103.5 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1102.1 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1108.7 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1105.5 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1105.0 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1104.3 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1103.5 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1102.4 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1101.4 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1100.4 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1106.8 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1102.2 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1101.3 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1100.1 kbps | Dropped: 0
+[Metrics] FPS: 0.0 | Bitrate: 0.0 kbps | Dropped: 0
+[Metrics] FPS: 0.0 | Bitrate: 387.5 kbps | Dropped: 0
+[Metrics] FPS: 9.4 | Bitrate: 437.7 kbps | Dropped: 0
+[Metrics] FPS: 8.8 | Bitrate: 546.9 kbps | Dropped: 0
+[Metrics] FPS: 8.5 | Bitrate: 555.7 kbps | Dropped: 0
+[Metrics] FPS: 8.3 | Bitrate: 547.9 kbps | Dropped: 0
+[Metrics] FPS: 8.1 | Bitrate: 548.2 kbps | Dropped: 0
+[Metrics] FPS: 8.0 | Bitrate: 546.6 kbps | Dropped: 0
+[Metrics] FPS: 8.0 | Bitrate: 552.9 kbps | Dropped: 0
+[Metrics] FPS: 7.9 | Bitrate: 549.5 kbps | Dropped: 0
+[Metrics] FPS: 7.9 | Bitrate: 548.5 kbps | Dropped: 0
+[Metrics] FPS: 7.8 | Bitrate: 549.8 kbps | Dropped: 0
+[Metrics] FPS: 7.8 | Bitrate: 551.1 kbps | Dropped: 0
+[Metrics] FPS: 7.8 | Bitrate: 551.4 kbps | Dropped: 0
+[Metrics] FPS: 7.8 | Bitrate: 552.1 kbps | Dropped: 0
+[Metrics] FPS: 7.7 | Bitrate: 568.9 kbps | Dropped: 0
+[Metrics] FPS: 7.7 | Bitrate: 561.0 kbps | Dropped: 0
+[Metrics] FPS: 7.7 | Bitrate: 559.3 kbps | Dropped: 0
+[Metrics] FPS: 7.7 | Bitrate: 558.1 kbps | Dropped: 0
+[Metrics] FPS: 7.7 | Bitrate: 557.7 kbps | Dropped: 0
+[Metrics] FPS: 7.7 | Bitrate: 556.8 kbps | Dropped: 0
+[Metrics] FPS: 7.7 | Bitrate: 558.3 kbps | Dropped: 0
+[Metrics] FPS: 7.7 | Bitrate: 553.9 kbps | Dropped: 0
+[Metrics] FPS: 7.7 | Bitrate: 555.2 kbps | Dropped: 0
+[Metrics] FPS: 7.6 | Bitrate: 557.2 kbps | Dropped: 0
+[Metrics] FPS: 7.6 | Bitrate: 559.5 kbps | Dropped: 0
+[Metrics] FPS: 7.6 | Bitrate: 559.5 kbps | Dropped: 0
+[Metrics] FPS: 7.6 | Bitrate: 562.3 kbps | Dropped: 0
+[Metrics] FPS: 7.6 | Bitrate: 563.7 kbps | Dropped: 0
+[Metrics] FPS: 7.6 | Bitrate: 563.7 kbps | Dropped: 0
+[Metrics] FPS: 7.6 | Bitrate: 574.3 kbps | Dropped: 0
+[Metrics] FPS: 7.6 | Bitrate: 571.2 kbps | Dropped: 0
+[Metrics] FPS: 7.6 | Bitrate: 570.8 kbps | Dropped: 0
+[Metrics] FPS: 7.6 | Bitrate: 570.1 kbps | Dropped: 0
+[Metrics] FPS: 7.6 | Bitrate: 569.3 kbps | Dropped: 0
+[Metrics] FPS: 7.6 | Bitrate: 570.1 kbps | Dropped: 0
+[Metrics] FPS: 7.6 | Bitrate: 569.1 kbps | Dropped: 0
+[Metrics] FPS: 7.6 | Bitrate: 568.7 kbps | Dropped: 0
+[Metrics] FPS: 7.6 | Bitrate: 568.3 kbps | Dropped: 0
+[Metrics] FPS: 7.6 | Bitrate: 569.4 kbps | Dropped: 0
+[Metrics] FPS: 7.6 | Bitrate: 569.9 kbps | Dropped: 0
+[Metrics] FPS: 7.6 | Bitrate: 569.0 kbps | Dropped: 0
+[Metrics] FPS: 7.6 | Bitrate: 568.3 kbps | Dropped: 0
 🛑 Stopped video streaming to AWS
 🛑 MPTCP video proxy stopped
 📺 Video stream ended
-Sensor WebSocket connected: 7123facf-3991-5f95-e33e-c7f4e43044a5
-Sensor WebSocket connected: 4064c68b-3ab1-f363-703a-ccebc9a238ca
+🎥 Starting video stream to AWS: 13.212.221.200:6060
+🖥️  Detected OS: linux
+✅ MPTCP video proxy started on port 6062
+   Forwarding to 13.212.221.200:6060 with source port 6060
+   🎯 Using port 6060 for custom MPTCP scheduler routing (video)
+📌 Preferred video device requested: /dev/video1
+📹 Using video device: /dev/video1
+🔀 Using MPTCP for streaming with scheduler: clientportsched
+FFmpeg command: ffmpeg -f v4l2 -framerate 30 -video_size 640x480 -i /dev/video1 -vcodec libx264 -preset ultrafast -tune zerolatency -b:v 2M -maxrate 2M -bufsize 4M -g 60 -keyint_min 60 -f mpegts tcp://127.0.0.1:6062
+✅ Video streaming started successfully
+[FFmpeg Error] [in#0 @ 0x6269c520a840] Error opening input: Inappropriate ioctl for device
+[FFmpeg Error] Error opening input file /dev/video1.
+[FFmpeg Error] Error opening input files: Inappropriate ioctl for device
+📺 Video stream ended
+🛑 MPTCP video proxy stopped
+🎥 Starting video stream to AWS: 13.212.221.200:6060
+🖥️  Detected OS: linux
+✅ MPTCP video proxy started on port 6062
+   Forwarding to 13.212.221.200:6060 with source port 6060
+   🎯 Using port 6060 for custom MPTCP scheduler routing (video)
+📌 Preferred video device requested: /dev/video0
+📹 Using video device: /dev/video0
+🔀 Using MPTCP for streaming with scheduler: clientportsched
+FFmpeg command: ffmpeg -f v4l2 -framerate 30 -video_size 640x480 -i /dev/video0 -vcodec libx264 -preset ultrafast -tune zerolatency -b:v 2M -maxrate 2M -bufsize 4M -g 60 -keyint_min 60 -f mpegts tcp://127.0.0.1:6062
+✅ Video streaming started successfully
+[Metrics] FPS: 0.0 | Bitrate: 0.0 kbps | Dropped: 0
+[Metrics] FPS: 0.0 | Bitrate: 390.2 kbps | Dropped: 0
+[Metrics] FPS: 9.4 | Bitrate: 439.5 kbps | Dropped: 0
+[Metrics] FPS: 8.7 | Bitrate: 546.9 kbps | Dropped: 0
+[Metrics] FPS: 8.5 | Bitrate: 555.2 kbps | Dropped: 0
+[Metrics] FPS: 8.2 | Bitrate: 548.8 kbps | Dropped: 0
+[Metrics] FPS: 8.1 | Bitrate: 555.7 kbps | Dropped: 0
+[Metrics] FPS: 8.0 | Bitrate: 566.4 kbps | Dropped: 0
+[Metrics] FPS: 8.0 | Bitrate: 570.8 kbps | Dropped: 0
+[Metrics] FPS: 7.9 | Bitrate: 572.9 kbps | Dropped: 0
+[Metrics] FPS: 7.9 | Bitrate: 572.6 kbps | Dropped: 0
+[Metrics] FPS: 7.8 | Bitrate: 571.7 kbps | Dropped: 0
+[Metrics] FPS: 7.8 | Bitrate: 572.4 kbps | Dropped: 0
+[Metrics] FPS: 7.8 | Bitrate: 572.6 kbps | Dropped: 0
+[Metrics] FPS: 7.8 | Bitrate: 573.1 kbps | Dropped: 0
+[Metrics] FPS: 7.7 | Bitrate: 594.4 kbps | Dropped: 0
+[Metrics] FPS: 7.7 | Bitrate: 581.3 kbps | Dropped: 0
+[Metrics] FPS: 7.7 | Bitrate: 579.4 kbps | Dropped: 0
+[Metrics] FPS: 7.7 | Bitrate: 578.6 kbps | Dropped: 0
+[Metrics] FPS: 7.7 | Bitrate: 578.2 kbps | Dropped: 0
+[Metrics] FPS: 7.7 | Bitrate: 577.9 kbps | Dropped: 0
+[Metrics] FPS: 7.7 | Bitrate: 577.6 kbps | Dropped: 0
+[Metrics] FPS: 7.7 | Bitrate: 576.7 kbps | Dropped: 0
+[Metrics] FPS: 7.7 | Bitrate: 576.2 kbps | Dropped: 0
+[Metrics] FPS: 7.6 | Bitrate: 574.0 kbps | Dropped: 0
+[Metrics] FPS: 7.6 | Bitrate: 575.2 kbps | Dropped: 0
+[Metrics] FPS: 7.6 | Bitrate: 572.0 kbps | Dropped: 0
+[Metrics] FPS: 7.6 | Bitrate: 571.9 kbps | Dropped: 0
+[Metrics] FPS: 7.6 | Bitrate: 571.7 kbps | Dropped: 0
+[Metrics] FPS: 7.6 | Bitrate: 571.4 kbps | Dropped: 0
+[Metrics] FPS: 7.6 | Bitrate: 577.8 kbps | Dropped: 0
+[Metrics] FPS: 7.6 | Bitrate: 571.1 kbps | Dropped: 0
+[Metrics] FPS: 7.6 | Bitrate: 569.9 kbps | Dropped: 0
+[Metrics] FPS: 7.6 | Bitrate: 569.1 kbps | Dropped: 0
+[Metrics] FPS: 7.6 | Bitrate: 568.4 kbps | Dropped: 0
+[Metrics] FPS: 7.6 | Bitrate: 567.9 kbps | Dropped: 0
+[Metrics] FPS: 7.6 | Bitrate: 567.6 kbps | Dropped: 0
+[Metrics] FPS: 7.6 | Bitrate: 567.2 kbps | Dropped: 0
+[Metrics] FPS: 7.6 | Bitrate: 564.4 kbps | Dropped: 0
+[Metrics] FPS: 7.6 | Bitrate: 562.7 kbps | Dropped: 0
+[Metrics] FPS: 7.6 | Bitrate: 563.0 kbps | Dropped: 0
+[Metrics] FPS: 7.6 | Bitrate: 563.1 kbps | Dropped: 0
+[Metrics] FPS: 7.6 | Bitrate: 563.2 kbps | Dropped: 0
+[Metrics] FPS: 7.6 | Bitrate: 563.0 kbps | Dropped: 0
+[Metrics] FPS: 7.6 | Bitrate: 562.2 kbps | Dropped: 0
+[Metrics] FPS: 7.6 | Bitrate: 567.6 kbps | Dropped: 0
+[Metrics] FPS: 7.6 | Bitrate: 563.4 kbps | Dropped: 0
+[Metrics] FPS: 7.6 | Bitrate: 563.0 kbps | Dropped: 0
+[Metrics] FPS: 7.6 | Bitrate: 562.6 kbps | Dropped: 0
+[Metrics] FPS: 7.6 | Bitrate: 561.8 kbps | Dropped: 0
+[Metrics] FPS: 7.6 | Bitrate: 561.2 kbps | Dropped: 0
+[Metrics] FPS: 7.6 | Bitrate: 558.8 kbps | Dropped: 0
+[Metrics] FPS: 7.6 | Bitrate: 556.1 kbps | Dropped: 0
+[Metrics] FPS: 7.6 | Bitrate: 553.0 kbps | Dropped: 0
+[Metrics] FPS: 7.6 | Bitrate: 550.2 kbps | Dropped: 0
+[Metrics] FPS: 7.6 | Bitrate: 548.6 kbps | Dropped: 0
+[Metrics] FPS: 7.6 | Bitrate: 546.5 kbps | Dropped: 0
+[Metrics] FPS: 7.6 | Bitrate: 545.3 kbps | Dropped: 0
+[Metrics] FPS: 7.6 | Bitrate: 544.5 kbps | Dropped: 0
+[Metrics] FPS: 7.5 | Bitrate: 543.5 kbps | Dropped: 0
+[Metrics] FPS: 7.5 | Bitrate: 547.0 kbps | Dropped: 0
+[Metrics] FPS: 7.5 | Bitrate: 545.4 kbps | Dropped: 0
+[Metrics] FPS: 7.5 | Bitrate: 545.1 kbps | Dropped: 0
+[Metrics] FPS: 7.5 | Bitrate: 545.3 kbps | Dropped: 0
+[Metrics] FPS: 7.5 | Bitrate: 545.3 kbps | Dropped: 0
+[Metrics] FPS: 7.5 | Bitrate: 544.8 kbps | Dropped: 0
+[Metrics] FPS: 7.5 | Bitrate: 543.8 kbps | Dropped: 0
+[Metrics] FPS: 7.5 | Bitrate: 543.3 kbps | Dropped: 0
+[Metrics] FPS: 7.5 | Bitrate: 542.9 kbps | Dropped: 0
+[Metrics] FPS: 7.5 | Bitrate: 542.2 kbps | Dropped: 0
+[Metrics] FPS: 7.5 | Bitrate: 541.4 kbps | Dropped: 0
+[Metrics] FPS: 7.5 | Bitrate: 540.7 kbps | Dropped: 0
+[Metrics] FPS: 7.5 | Bitrate: 540.0 kbps | Dropped: 0
+[Metrics] FPS: 7.5 | Bitrate: 539.9 kbps | Dropped: 0
+[Metrics] FPS: 7.5 | Bitrate: 539.6 kbps | Dropped: 0
+[Metrics] FPS: 7.5 | Bitrate: 543.0 kbps | Dropped: 0
+[Metrics] FPS: 7.5 | Bitrate: 541.7 kbps | Dropped: 0
+[Metrics] FPS: 7.5 | Bitrate: 541.1 kbps | Dropped: 0
+[Metrics] FPS: 7.5 | Bitrate: 541.4 kbps | Dropped: 0
+[Metrics] FPS: 7.5 | Bitrate: 541.7 kbps | Dropped: 0
+[Metrics] FPS: 7.5 | Bitrate: 541.6 kbps | Dropped: 0
+[Metrics] FPS: 7.5 | Bitrate: 541.9 kbps | Dropped: 0
+[Metrics] FPS: 7.5 | Bitrate: 542.1 kbps | Dropped: 0
+[Metrics] FPS: 7.5 | Bitrate: 542.2 kbps | Dropped: 0
+[Metrics] FPS: 7.5 | Bitrate: 542.3 kbps | Dropped: 0
+[Metrics] FPS: 7.5 | Bitrate: 542.5 kbps | Dropped: 0
+[Metrics] FPS: 7.5 | Bitrate: 542.4 kbps | Dropped: 0
+[Metrics] FPS: 7.5 | Bitrate: 542.8 kbps | Dropped: 0
+[Metrics] FPS: 7.5 | Bitrate: 542.5 kbps | Dropped: 0
+[Metrics] FPS: 7.5 | Bitrate: 542.8 kbps | Dropped: 0
+[Metrics] FPS: 7.5 | Bitrate: 545.9 kbps | Dropped: 0
+[Metrics] FPS: 7.5 | Bitrate: 546.0 kbps | Dropped: 0
+[Metrics] FPS: 7.5 | Bitrate: 544.2 kbps | Dropped: 0
+[Metrics] FPS: 7.5 | Bitrate: 544.4 kbps | Dropped: 0
+[Metrics] FPS: 7.5 | Bitrate: 544.3 kbps | Dropped: 0
+[Metrics] FPS: 7.5 | Bitrate: 544.0 kbps | Dropped: 0
+[Metrics] FPS: 7.5 | Bitrate: 544.2 kbps | Dropped: 0
+[Metrics] FPS: 7.5 | Bitrate: 544.3 kbps | Dropped: 0
+[Metrics] FPS: 7.5 | Bitrate: 544.2 kbps | Dropped: 0
+[Metrics] FPS: 7.5 | Bitrate: 544.0 kbps | Dropped: 0
+[Metrics] FPS: 7.5 | Bitrate: 543.6 kbps | Dropped: 0
+[Metrics] FPS: 7.5 | Bitrate: 543.6 kbps | Dropped: 0
+🛑 Stopped video streaming to AWS
+🛑 MPTCP video proxy stopped
+📺 Video stream ended
+🎥 Starting video stream to AWS: 13.212.221.200:6060
+🖥️  Detected OS: linux
+✅ MPTCP video proxy started on port 6062
+   Forwarding to 13.212.221.200:6060 with source port 6060
+   🎯 Using port 6060 for custom MPTCP scheduler routing (video)
+📌 Preferred video device requested: /dev/video2
+📹 Using video device: /dev/video2
+🔀 Using MPTCP for streaming with scheduler: clientportsched
+FFmpeg command: ffmpeg -f v4l2 -framerate 30 -video_size 640x480 -i /dev/video2 -vcodec libx264 -preset ultrafast -tune zerolatency -b:v 2M -maxrate 2M -bufsize 4M -g 60 -keyint_min 60 -f mpegts tcp://127.0.0.1:6062
+✅ Video streaming started successfully
+[Metrics] FPS: 0.0 | Bitrate: 0.0 kbps | Dropped: 0
+[Metrics] FPS: 0.0 | Bitrate: 892.0 kbps | Dropped: 0
+[Metrics] FPS: 16.0 | Bitrate: 1023.8 kbps | Dropped: 0
+[Metrics] FPS: 18.0 | Bitrate: 1067.8 kbps | Dropped: 0
+[Metrics] FPS: 20.0 | Bitrate: 1062.2 kbps | Dropped: 0
+[Metrics] FPS: 21.0 | Bitrate: 1130.1 kbps | Dropped: 0
+[Metrics] FPS: 22.0 | Bitrate: 1238.2 kbps | Dropped: 0
+[Metrics] FPS: 22.0 | Bitrate: 1292.6 kbps | Dropped: 0
+[Metrics] FPS: 22.0 | Bitrate: 1332.2 kbps | Dropped: 0
+[Metrics] FPS: 23.0 | Bitrate: 1376.8 kbps | Dropped: 0
+[Metrics] FPS: 23.0 | Bitrate: 1413.9 kbps | Dropped: 0
+[Metrics] FPS: 23.0 | Bitrate: 1477.6 kbps | Dropped: 0
+[Metrics] FPS: 23.0 | Bitrate: 1505.2 kbps | Dropped: 0
+[Metrics] FPS: 23.0 | Bitrate: 1520.7 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1541.0 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1582.9 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1587.7 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1599.9 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1605.4 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1616.4 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1639.2 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1630.5 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1627.8 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1623.0 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1651.3 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1642.4 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1644.0 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1645.4 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1647.5 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1671.2 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1673.7 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1678.3 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1680.1 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1681.1 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1700.4 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1701.0 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1704.4 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1704.7 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1718.5 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1721.6 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1721.4 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1723.2 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1723.0 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1737.4 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1737.3 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1736.9 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1739.0 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1738.7 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1751.9 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1752.9 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1753.3 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1754.7 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1762.3 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1764.4 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1763.7 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1762.8 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1764.2 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1767.0 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1767.7 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1766.0 kbps | Dropped: 0
+🛑 Stopped video streaming to AWS
+🛑 MPTCP video proxy stopped
+📺 Video stream ended
+🎥 Starting video stream to AWS: 13.212.221.200:6060
+🖥️  Detected OS: linux
+✅ MPTCP video proxy started on port 6062
+   Forwarding to 13.212.221.200:6060 with source port 6060
+   🎯 Using port 6060 for custom MPTCP scheduler routing (video)
+📌 Preferred video device requested: /dev/video2
+📹 Using video device: /dev/video2
+🔀 Using MPTCP for streaming with scheduler: clientportsched
+FFmpeg command: ffmpeg -f v4l2 -framerate 30 -video_size 640x480 -i /dev/video2 -vcodec libx264 -preset ultrafast -tune zerolatency -b:v 2M -maxrate 2M -bufsize 4M -g 60 -keyint_min 60 -f mpegts tcp://127.0.0.1:6062
+✅ Video streaming started successfully
+[Metrics] FPS: 0.0 | Bitrate: 0.0 kbps | Dropped: 0
+[Metrics] FPS: 0.0 | Bitrate: 898.9 kbps | Dropped: 0
+[Metrics] FPS: 16.0 | Bitrate: 1025.9 kbps | Dropped: 0
+[Metrics] FPS: 18.0 | Bitrate: 1068.6 kbps | Dropped: 0
+[Metrics] FPS: 20.0 | Bitrate: 1057.2 kbps | Dropped: 0
+[Metrics] FPS: 21.0 | Bitrate: 1122.4 kbps | Dropped: 0
+[Metrics] FPS: 22.0 | Bitrate: 1230.4 kbps | Dropped: 0
+[Metrics] FPS: 22.0 | Bitrate: 1301.7 kbps | Dropped: 0
+[Metrics] FPS: 22.0 | Bitrate: 1345.2 kbps | Dropped: 0
+[Metrics] FPS: 23.0 | Bitrate: 1392.7 kbps | Dropped: 0
+[Metrics] FPS: 23.0 | Bitrate: 1424.3 kbps | Dropped: 0
+[Metrics] FPS: 23.0 | Bitrate: 1477.6 kbps | Dropped: 0
+[Metrics] FPS: 23.0 | Bitrate: 1506.4 kbps | Dropped: 0
+[Metrics] FPS: 23.0 | Bitrate: 1522.6 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1543.0 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1581.4 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1586.1 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1601.0 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1609.1 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1620.8 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1640.3 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1650.0 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1653.3 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1657.0 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1689.3 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1680.4 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1686.5 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1687.7 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1689.4 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1707.6 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1708.0 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1711.7 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1712.3 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1712.9 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1727.4 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1727.9 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1731.1 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1730.9 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1744.2 kbps | Dropped: 0
+[Metrics] FPS: 24.0 | Bitrate: 1744.5 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1744.0 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1745.9 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1745.0 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1753.8 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1756.2 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1755.5 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1757.0 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1756.5 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1764.5 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1763.9 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1763.0 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1764.4 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1770.5 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1766.2 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1765.6 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1764.7 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1765.0 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1765.3 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1766.3 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1765.0 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1764.5 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1773.5 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1764.7 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1766.0 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1764.7 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1764.3 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1768.3 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1764.6 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1765.7 kbps | Dropped: 0
+[Metrics] FPS: 25.0 | Bitrate: 1764.3 kbps | Dropped: 0
+🛑 Stopped video streaming to AWS
+🛑 MPTCP video proxy stopped
+📺 Video stream ended
+Sensor WebSocket connected: a36951ef-de7a-d07a-48e6-7e32ab22da75
+Sensor WebSocket connected: da5c5537-f146-cdf4-f86f-ac2ba24fd613
 📡 Connecting to AWS server with MPTCP: 13.212.221.200:5000
 ✅ MPTCP proxy started on port 5001
    Forwarding to 13.212.221.200:5000 with source port 5000
@@ -193,260 +561,52 @@ Sensor WebSocket connected: 4064c68b-3ab1-f363-703a-ccebc9a238ca
 ✅ TCP packet transmission started
 👂 Listening for packet acknowledgments...
 📤 Sent 100 packets
-📥 Received 100 packets (Avg latency: 7ms)
-Sensor WebSocket disconnected: 7123facf-3991-5f95-e33e-c7f4e43044a5
-Sensor WebSocket connected: c56d2f36-d8fa-20ec-172a-8fa6e88b6733
-Sensor WebSocket connected: f223078f-fa67-12c0-e9c0-2679b5120b07
-Sensor WebSocket disconnected: f223078f-fa67-12c0-e9c0-2679b5120b07
-Sensor WebSocket connected: b71b6029-f4f6-9cfd-7fa5-047cb3f89cca
-Sensor WebSocket connected: 2fdf7bde-4c59-b38e-c018-1f903adc5076
-Sensor WebSocket disconnected: 2fdf7bde-4c59-b38e-c018-1f903adc5076
+📥 Received 100 packets (Avg latency: 36ms)
 📤 Sent 200 packets
-📥 Received 200 packets (Avg latency: 6ms)
-🎥 Starting video stream to AWS: 13.212.221.200:6060
-🖥️  Detected OS: linux
-✅ MPTCP video proxy started on port 6062
-   Forwarding to 13.212.221.200:6060 with source port 6060
-   🎯 Using port 6060 for custom MPTCP scheduler routing (video)
-🔍 Scanning for video capture devices...
-📹 Found device: HD Pro Webcam C920 (usb-0000:03:00.0-2):
-   Testing: /dev/video0
-   ⏭️  Skipped: /dev/video0 (metadata/not capture)
-   Testing: /dev/video1
-   ⏭️  Skipped: /dev/video1 (metadata/not capture)
-⚠️ v4l2-ctl scan complete, no valid devices found
-🔍 Manual scanning /dev/video* devices with FFmpeg...
-📹 Checking /dev/video0...
-      ✓ Found valid format: [video4linux2,v4l2 @ 0x587e4642e180] Raw       :     yuyv422 :           YUYV 4:2:2 : 640x480 160x90 160x120 176x144 320x180 320x240 352x288 432x240 640x360 800x448 800x600 864x480 960x720 1024x576 1280x720 1600x896 1920x1080 2304x1296 2304x1536
-      ✓ Found valid format: [video4linux2,v4l2 @ 0x587e4642e180] Compressed:       mjpeg :          Motion-JPEG : 640x480 160x90 160x120 176x144 320x180 320x240 352x288 432x240 640x360 800x448 800x600 864x480 960x720 1024x576 1280x720 1600x896 1920x1080
-✅ Found valid capture device: /dev/video0
-📹 Using video device: /dev/video0
-🔀 Using MPTCP for streaming with scheduler: clientportsched
-FFmpeg command: ffmpeg -f v4l2 -framerate 30 -video_size 640x480 -i /dev/video0 -vcodec libx264 -preset ultrafast -tune zerolatency -b:v 2M -maxrate 2M -bufsize 4M -g 60 -keyint_min 60 -f mpegts tcp://127.0.0.1:6062
-✅ Video streaming started successfully
-[Metrics] FPS: 0.0 | Bitrate: 1158.1 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1140.4 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1106.9 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1095.1 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1082.9 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1076.3 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1070.0 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1062.7 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1114.6 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1104.4 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1092.2 kbps | Dropped: 0
+📥 Received 200 packets (Avg latency: 24ms)
 📤 Sent 300 packets
-📥 Received 300 packets (Avg latency: 7ms)
-[Metrics] FPS: 15.0 | Bitrate: 1083.6 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1077.1 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1070.0 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1065.8 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1063.0 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1095.8 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1092.9 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1093.0 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1088.9 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1085.9 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1084.1 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1083.5 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1081.5 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1102.2 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1098.5 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1094.8 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1091.4 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1089.0 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1085.8 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1083.3 kbps | Dropped: 0
+📥 Received 300 packets (Avg latency: 19ms)
 📤 Sent 400 packets
-📥 Received 400 packets (Avg latency: 7ms)
-[Metrics] FPS: 15.0 | Bitrate: 1081.4 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1096.9 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1095.1 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1093.2 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1091.2 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1089.9 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1089.4 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1087.7 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1085.7 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1098.8 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1096.9 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1094.9 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1093.5 kbps | Dropped: 0
-Sensor WebSocket connected: 6a8ddf71-c36a-c697-07df-6dcb34dfd74f
-Sensor WebSocket connected: 39b009c8-96b4-bd18-123c-59430126efae
-[Metrics] FPS: 15.0 | Bitrate: 1093.6 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1092.3 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1091.6 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1090.8 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1101.2 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1099.7 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1098.1 kbps | Dropped: 0
+📥 Received 400 packets (Avg latency: 17ms)
 📤 Sent 500 packets
-📥 Received 500 packets (Avg latency: 6ms)
-[Metrics] FPS: 15.0 | Bitrate: 1096.6 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1096.6 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1095.8 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1095.7 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1094.7 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1104.0 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1104.4 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1102.6 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1101.2 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1100.8 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1100.1 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1099.2 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1098.1 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1106.1 kbps | Dropped: 0
-🛑 MPTCP proxy stopped
-🛑 TCP packet transmission stopped
-[Metrics] FPS: 15.0 | Bitrate: 1105.0 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1103.6 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1102.4 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1101.4 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1100.3 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1099.2 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1108.3 kbps | Dropped: 0
-Sensor WebSocket disconnected: 39b009c8-96b4-bd18-123c-59430126efae
-[Metrics] FPS: 15.0 | Bitrate: 1106.4 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1105.4 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1104.5 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1104.1 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1103.2 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1102.5 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1102.3 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1109.6 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1106.7 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1105.4 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1104.3 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1102.8 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1102.0 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1100.8 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1100.5 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1107.2 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1104.0 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1102.9 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1101.8 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1100.6 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1099.5 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1098.5 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1097.6 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1103.4 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1101.2 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1100.6 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1099.8 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1099.3 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1099.0 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1098.2 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1097.4 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1102.7 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1098.3 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1097.7 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1096.8 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1096.2 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1095.4 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1094.5 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1093.4 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1098.5 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1095.3 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1095.1 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1094.4 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1094.0 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1093.5 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1092.9 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1092.3 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1097.1 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1093.3 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1092.6 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1091.9 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1091.2 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1090.8 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1090.3 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1089.7 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1094.5 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1091.4 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1090.7 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1090.3 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1089.8 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1089.4 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1089.3 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1088.4 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1092.5 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1090.3 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1089.7 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1089.3 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1088.6 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1088.1 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1087.5 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1086.9 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1090.2 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1088.3 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1088.0 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1087.6 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1087.4 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1087.1 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1086.5 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1086.6 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1089.1 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1087.5 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1087.3 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1086.6 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1085.8 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1085.7 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1085.3 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1085.3 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1088.3 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1086.1 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1085.0 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1084.6 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1084.5 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1084.3 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1084.3 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1084.1 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1086.9 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1085.4 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1085.6 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1087.3 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1087.0 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1087.4 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1087.8 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1087.3 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1087.8 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1086.1 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1085.5 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1083.7 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1082.5 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1081.9 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1081.7 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1081.7 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1083.6 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1082.0 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1081.5 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1081.1 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1080.9 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1080.7 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1080.3 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1080.0 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1082.3 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1080.9 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1080.8 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1080.6 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1080.3 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1079.9 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1079.9 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1080.0 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1081.2 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1080.5 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1079.8 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1079.9 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1079.8 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1079.8 kbps | Dropped: 0
-[Metrics] FPS: 15.0 | Bitrate: 1079.6 kbps | Dropped: 0
-🛑 Stopped video streaming to AWS
-🛑 MPTCP video proxy stopped
-📺 Video stream ended
-Sensor WebSocket disconnected: c56d2f36-d8fa-20ec-172a-8fa6e88b6733
-Sensor WebSocket disconnected: b71b6029-f4f6-9cfd-7fa5-047cb3f89cca
-Sensor WebSocket disconnected: 4064c68b-3ab1-f363-703a-ccebc9a238ca
-Sensor WebSocket disconnected: 6a8ddf71-c36a-c697-07df-6dcb34dfd74f
-2025-11-14T22:01:42.630+08:00  INFO 24661 --- [backend] [ionShutdownHook] o.s.b.w.e.tomcat.GracefulShutdown        : Commencing graceful shutdown. Waiting for active requests to complete
-2025-11-14T22:01:42.660+08:00  INFO 24661 --- [backend] [tomcat-shutdown] o.s.b.w.e.tomcat.GracefulShutdown        : Graceful shutdown complete
+📥 Received 500 packets (Avg latency: 18ms)
+📤 Sent 600 packets
+📥 Received 600 packets (Avg latency: 18ms)
+📤 Sent 700 packets
+📥 Received 700 packets (Avg latency: 18ms)
+📤 Sent 800 packets
+📥 Received 800 packets (Avg latency: 17ms)
+📤 Sent 900 packets
+📥 Received 900 packets (Avg latency: 16ms)
+📤 Sent 1000 packets
+📥 Received 1000 packets (Avg latency: 16ms)
+📤 Sent 1100 packets
+📥 Received 1100 packets (Avg latency: 16ms)
+📤 Sent 1200 packets
+📥 Received 1200 packets (Avg latency: 15ms)
+📤 Sent 1300 packets
+📥 Received 1300 packets (Avg latency: 15ms)
+📤 Sent 1400 packets
+📥 Received 1400 packets (Avg latency: 14ms)
+📤 Sent 1500 packets
+📥 Received 1500 packets (Avg latency: 15ms)
+📤 Sent 1600 packets
+📥 Received 1600 packets (Avg latency: 14ms)
+📤 Sent 1700 packets
+📥 Received 1700 packets (Avg latency: 14ms)
+📤 Sent 1800 packets
+📥 Received 1800 packets (Avg latency: 19ms)
+📤 Sent 1900 packets
+📥 Received 1900 packets (Avg latency: 18ms)
+📤 Sent 2000 packets
+📥 Received 2000 packets (Avg latency: 18ms)
+📤 Sent 2100 packets
+📥 Received 2100 packets (Avg latency: 18ms)
+📤 Sent 2200 packets
+📥 Received 2200 packets (Avg latency: 18ms)
+📤 Sent 2300 packets
+📥 Received 2300 packets (Avg latency: 17ms)
+📤 Sent 2400 packets
+📥 Received 2400 packets (Avg latency: 17ms)
+📤 Sent 2500 packets
+📥 Received 2500 packets (Avg latency: 18ms)
