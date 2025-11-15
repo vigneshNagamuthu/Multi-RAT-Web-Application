@@ -26,13 +26,13 @@ public class TcpPacketSenderService {
     private Process proxyProcess;
     
     private boolean isRunning = false;
-    private boolean useMptcp = true; // NEW: Toggle for MPTCP vs TCP
+    private boolean useMptcp = true; // Toggle for MPTCP vs TCP
     private int sentPackets = 0;
     private int receivedPackets = 0;
     private List<Integer> receivedSequences = new CopyOnWriteArrayList<>();
     private Map<Integer, Long> sentTimestamps = new ConcurrentHashMap<>();
     private List<Long> latencies = new CopyOnWriteArrayList<>();
-    private int delayedPackets = 0; // Packets with >1000ms latency
+    private int retransmittedPackets = 0; // Packets with >1000ms latency (likely retransmitted)
     
     // Packet sending rate (packets per second)
     private int packetsPerSecond = 10;
@@ -45,7 +45,7 @@ public class TcpPacketSenderService {
         try {
             if (useMptcp) {
                 // MPTCP mode - use socat proxy
-                System.out.println("🔡 Connecting to AWS server with MPTCP: " + AWS_SERVER + ":" + AWS_PORT);
+                System.out.println("📡 Connecting to AWS server with MPTCP: " + AWS_SERVER + ":" + AWS_PORT);
                 
                 // Start local MPTCP proxy using socat
                 startMptcpProxy();
@@ -61,7 +61,7 @@ public class TcpPacketSenderService {
                 socket = new Socket("127.0.0.1", LOCAL_PROXY_PORT);
             } else {
                 // Standard TCP mode - direct connection
-                System.out.println("🔡 Connecting to AWS server with TCP: " + AWS_SERVER + ":" + AWS_PORT);
+                System.out.println("📡 Connecting to AWS server with TCP: " + AWS_SERVER + ":" + AWS_PORT);
                 socket = new Socket(AWS_SERVER, AWS_PORT);
             }
             
@@ -74,7 +74,7 @@ public class TcpPacketSenderService {
             receivedSequences.clear();
             sentTimestamps.clear();
             latencies.clear();
-            delayedPackets = 0;
+            retransmittedPackets = 0;
             
             // Start packet sender thread
             scheduler = Executors.newScheduledThreadPool(2);
@@ -267,10 +267,10 @@ public class TcpPacketSenderService {
                     long latency = receivedTime - sentTime;
                     latencies.add(latency);
                     
-                    // Track delayed packets (>1000ms)
+                    // Track retransmitted packets (>1000ms)
                     if (latency > 1000) {
-                        delayedPackets++;
-                        System.out.println("⚠️ Delayed packet #" + seqNum + " - Latency: " + latency + "ms");
+                        retransmittedPackets++;
+                        System.out.println("⚠️ Retransmitted packet #" + seqNum + " - Latency: " + latency + "ms");
                     }
                     
                     if (receivedPackets % 100 == 0) {
@@ -298,12 +298,12 @@ public class TcpPacketSenderService {
     public Map<String, Object> getStatus() {
         Map<String, Object> status = new HashMap<>();
         status.put("isRunning", isRunning);
-        status.put("useMptcp", useMptcp); // NEW: Include MPTCP mode in status
+        status.put("useMptcp", useMptcp);
         status.put("sentPackets", sentPackets);
         status.put("receivedPackets", receivedPackets);
-        status.put("lostPackets", sentPackets - receivedPackets);
-        status.put("packetLossRate", sentPackets > 0 ? 
-            String.format("%.2f%%", (sentPackets - receivedPackets) * 100.0 / sentPackets) : "0.00%");
+        status.put("inTransitPackets", sentPackets - receivedPackets);
+        status.put("deliveryRate", sentPackets > 0 ? 
+            String.format("%.2f%%", receivedPackets * 100.0 / sentPackets) : "-");
         
         // Calculate latency statistics
         long avgLatency = 0;
@@ -319,7 +319,7 @@ public class TcpPacketSenderService {
         status.put("avgLatency", avgLatency);
         status.put("minLatency", minLatency);
         status.put("maxLatency", maxLatency);
-        status.put("delayedPackets", delayedPackets);
+        status.put("retransmittedPackets", retransmittedPackets);
         status.put("server", AWS_SERVER);
         status.put("port", AWS_PORT);
         status.put("packetsPerSecond", packetsPerSecond);
@@ -337,7 +337,7 @@ public class TcpPacketSenderService {
         receivedSequences.clear();
         sentTimestamps.clear();
         latencies.clear();
-        delayedPackets = 0;
+        retransmittedPackets = 0;
     }
     
     public boolean isRunning() {
@@ -348,7 +348,7 @@ public class TcpPacketSenderService {
         this.packetsPerSecond = Math.max(1, Math.min(100, rate)); // Limit 1-100 pps
     }
     
-    // NEW: Method to toggle MPTCP mode
+    // Method to toggle MPTCP mode
     public void setUseMptcp(boolean useMptcp) {
         if (!isRunning) {
             this.useMptcp = useMptcp;
