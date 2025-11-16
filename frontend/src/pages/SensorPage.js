@@ -4,7 +4,6 @@ import './SensorPage.css';
 export default function SensorPage() {
   const [isTransmitting, setIsTransmitting] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [isReconfiguring, setIsReconfiguring] = useState(false);
   const [stats, setStats] = useState({
     sentPackets: 0,
     receivedPackets: 0,
@@ -136,28 +135,6 @@ export default function SensorPage() {
       console.error('Error resetting:', err);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleReconfigureMptcp = async () => {
-    setIsReconfiguring(true);
-    try {
-      const response = await fetch('http://localhost:8080/api/sensor/tcp/reconfigure-mptcp', { 
-        method: 'POST' 
-      });
-      const data = await response.json();
-      
-      if (data.status === 'success') {
-        alert('✅ MPTCP Reconfigured!\n\n' + data.message);
-        await fetchStatus();
-      } else {
-        alert('❌ Reconfiguration failed:\n' + data.message);
-      }
-    } catch (err) {
-      console.error('Error reconfiguring MPTCP:', err);
-      alert('❌ Error reconfiguring MPTCP. Check backend logs.');
-    } finally {
-      setIsReconfiguring(false);
     }
   };
 
@@ -299,14 +276,6 @@ export default function SensorPage() {
             >
               🔄 Reset
             </button>
-            
-            <button
-              onClick={handleReconfigureMptcp}
-              disabled={isReconfiguring}
-              className="btn-reconfigure"
-            >
-              {isReconfiguring ? '⏳ Reconfiguring...' : '🔧 Reconfigure MPTCP'}
-            </button>
           </div>
         </div>
 
@@ -349,8 +318,6 @@ export default function SensorPage() {
           <strong>"Retransmitted"</strong> are packets that took &gt;1 second to arrive (often due to TCP retransmissions). 
           <strong>"In Transit"</strong> are packets currently being transmitted or retransmitted. 
           MPTCP uses multiple network paths for improved reliability and eliminates delays by sending duplicates on multiple paths simultaneously.
-          <br/><br/>
-          <strong>🔧 Network Changes:</strong> If you disconnect/reconnect a network interface, click 'Reconfigure MPTCP' before starting transmission again.
         </div>
       </div>
     </div>

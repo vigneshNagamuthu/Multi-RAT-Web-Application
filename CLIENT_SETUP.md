@@ -17,45 +17,6 @@ This guide covers setting up the **client-side application** (your laptop/develo
 
 ---
 
-## ⚠️ IMPORTANT: Configure Sudo Permissions (Linux Only)
-
-**This MUST be done FIRST before installation!**
-
-The application needs passwordless sudo access for MPTCP reconfiguration and port management. Configure this once at the start:
-
-```bash
-# Edit sudoers file safely
-sudo visudo
-```
-
-Add this line at the end (replace `youruser` with your actual username):
-
-```bash
-youruser ALL=(ALL) NOPASSWD: /usr/bin/fuser, /usr/sbin/ip, /usr/sbin/sysctl
-```
-
-**Example:**
-```bash
-dan ALL=(ALL) NOPASSWD: /usr/bin/fuser, /usr/sbin/ip, /usr/sbin/sysctl
-```
-
-**Why this is needed:**
-- `/usr/bin/fuser` - Kill processes using specific ports (port 5000 cleanup)
-- `/usr/sbin/ip` - Configure MPTCP endpoints when network interfaces change
-- `/usr/sbin/sysctl` - Read/write MPTCP kernel parameters
-
-**To verify:**
-```bash
-# Test each command (should not ask for password)
-sudo fuser -k 5000/tcp
-sudo ip mptcp endpoint show
-sudo sysctl net.mptcp.enabled
-```
-
-If any command asks for a password, check your visudo configuration.
-
----
-
 ## 🔧 Installation
 
 ### 1. Install System Dependencies
@@ -134,11 +95,8 @@ cat /proc/sys/net/mptcp/available_schedulers
 sudo sysctl -w net.mptcp.scheduler=clientportsched
 ```
 
-**What each tool does:**
-- **mptcpize:** Wraps applications to use MPTCP instead of regular TCP
-- **Python script:** Automatically configures MPTCP endpoints for all network interfaces
-
-**Note:** The setup script will automatically configure MPTCP endpoints. You can also manually reconfigure using the "🔧 Reconfigure MPTCP" button in the Sensor page UI.
+**What mptcpize does:**
+- **mptcpize:** Wraps applications to use MPTCP instead of regular TCP at the OS level
 
 ---
 
@@ -291,14 +249,6 @@ npm start
 - Packet loss rate
 - Average/min/max latency
 - Delayed packets (>1000ms)
-
-**Network Changes:**
-If you disconnect/reconnect a network interface (e.g., unplug Ethernet, switch WiFi):
-1. Click: **🔧 Reconfigure MPTCP** (in Sensor page)
-2. Wait for confirmation
-3. Click: **▶️ Start Transmission** again
-
-This reconfigures MPTCP endpoints without restarting the entire application.
 
 ---
 
@@ -476,33 +426,8 @@ mvn clean install
 # Kill processes using port 5000
 sudo fuser -k 5000/tcp
 
-# Wait a moment
+# Wait a moment and try again
 sleep 1
-
-# Or use the Reconfigure MPTCP button in the UI
-```
-
----
-
-### MPTCP Reconfiguration Failed
-
-**Error:** "Error running reconfiguration" when clicking Reconfigure MPTCP button
-
-**Fix:**
-```bash
-# 1. Check sudoers configuration
-sudo visudo
-# Verify line exists:
-# youruser ALL=(ALL) NOPASSWD: /usr/bin/fuser, /usr/sbin/ip, /usr/sbin/sysctl
-
-# 2. Check Python script exists
-ls -la /home/dan/Documents/GitHub/Multi-RAT-Web-Application/mptcp_quick_setup.py
-
-# 3. Make script executable
-chmod +x /home/dan/Documents/GitHub/Multi-RAT-Web-Application/mptcp_quick_setup.py
-
-# 4. Test script manually
-python3 /home/dan/Documents/GitHub/Multi-RAT-Web-Application/mptcp_quick_setup.py
 ```
 
 ---
