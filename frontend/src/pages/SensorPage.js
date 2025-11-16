@@ -4,22 +4,23 @@ import './SensorPage.css';
 export default function SensorPage() {
   const [isTransmitting, setIsTransmitting] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [useMptcp, setUseMptcp] = useState(true);
+  const [useMptcp, setUseMptcp] = useState(true); // NEW: MPTCP toggle state
   const [stats, setStats] = useState({
     sentPackets: 0,
     receivedPackets: 0,
-    inTransitPackets: 0,
-    deliveryRate: '-',
+    lostPackets: 0,
+    packetLossRate: '0.00%',
     avgLatency: 0,
     minLatency: 0,
     maxLatency: 0,
-    retransmittedPackets: 0,
+    delayedPackets: 0,
     server: '13.212.221.200',
     port: 5000,
     packetsPerSecond: 10,
-    useMptcp: true
+    useMptcp: true // NEW: Include in stats
   });
   const [receivedSequences, setReceivedSequences] = useState([]);
+  const [retransmittedPackets, setRetransmittedPackets] = useState([]);
   const [packetsPerSecond, setPacketsPerSecond] = useState(10);
   
   const wsRef = useRef(null);
@@ -42,6 +43,9 @@ export default function SensorPage() {
           setStats(message.data);
           if (message.data.receivedSequences) {
             setReceivedSequences(message.data.receivedSequences.slice(-50)); // Keep last 50
+          }
+          if (message.data.retransmittedPackets) {
+            setRetransmittedPackets(message.data.retransmittedPackets);
           }
           // Update useMptcp from server status
           if (message.data.hasOwnProperty('useMptcp')) {
@@ -80,6 +84,9 @@ export default function SensorPage() {
       if (data.receivedSequences) {
         setReceivedSequences(data.receivedSequences.slice(-50));
       }
+      if (data.retransmittedPackets) {
+        setRetransmittedPackets(data.retransmittedPackets);
+      }
       // Update useMptcp from server status
       if (data.hasOwnProperty('useMptcp')) {
         setUseMptcp(data.useMptcp);
@@ -89,7 +96,7 @@ export default function SensorPage() {
     }
   };
 
-  // Handle MPTCP toggle
+  // NEW: Handle MPTCP toggle
   const handleMptcpToggle = async (enabled) => {
     if (isTransmitting) {
       alert('⚠️ Cannot change protocol while transmission is running. Stop transmission first.');
@@ -163,6 +170,7 @@ export default function SensorPage() {
     try {
       await fetch('http://localhost:8080/api/sensor/tcp/reset', { method: 'POST' });
       setReceivedSequences([]);
+      setRetransmittedPackets([]);
       await fetchStatus();
     } catch (err) {
       console.error('Error resetting:', err);
@@ -214,10 +222,10 @@ export default function SensorPage() {
           </div>
 
           <div className="stat-card">
-            <div className="stat-icon">🔄</div>
+            <div className="stat-icon">⚠️</div>
             <div className="stat-content">
               <div className="stat-label">Retransmitted</div>
-              <div className="stat-value retransmitted">{stats.retransmittedPackets.toLocaleString()}</div>
+              <div className="stat-value delayed">{stats.delayedPackets.toLocaleString()}</div>
               <div className="stat-sublabel">&gt;1000ms</div>
             </div>
           </div>
@@ -237,7 +245,7 @@ export default function SensorPage() {
           
           <div className="latency-stat-card">
             <div className="latency-stat-label">In Transit</div>
-            <div className="latency-stat-value">{stats.inTransitPackets.toLocaleString()}</div>
+            <div className="latency-stat-value">{stats.lostPackets.toLocaleString()}</div>
           </div>
           
           <div className="latency-stat-card">
@@ -251,7 +259,7 @@ export default function SensorPage() {
           <div className="control-section">
             <h3>⚙️ Configuration</h3>
             
-            {/* Protocol Toggle Section */}
+            {/* NEW: MPTCP Toggle Section */}
             <div className="protocol-toggle-section">
               <label className="protocol-label">
                 <span className="protocol-label-text">Protocol Mode</span>
@@ -365,7 +373,7 @@ export default function SensorPage() {
             <h3>📊 Received Packets at AWS Server</h3>
             <span className="packet-count">{receivedSequences.length} packets shown (last 50)</span>
           </div>
-          <div className="packets-grid">
+          <div className="packets-list">
             {receivedSequences.length === 0 ? (
               <div className="no-packets">
                 <div className="no-packets-icon">🔭</div>
@@ -373,11 +381,20 @@ export default function SensorPage() {
                 <p className="no-packets-hint">Start transmission to see packets</p>
               </div>
             ) : (
-              receivedSequences.map((seqNum, index) => (
-                <div key={index} className="packet-item">
-                  <span className="packet-label">#{seqNum}</span>
-                </div>
-              ))
+              receivedSequences.map((seqNum, index) => {
+                const isRetransmitted = retransmittedPackets.includes(seqNum);
+                return (
+                  <div 
+                    key={index} 
+                    className={`packet-list-item ${isRetransmitted ? 'retransmitted' : 'successful'}`}
+                  >
+                    <span className="packet-number">#{seqNum}</span>
+                    <span className={`packet-status-badge ${isRetransmitted ? 'retransmitted' : 'successful'}`}>
+                      {isRetransmitted ? '⚠️ Retransmitted' : '✅ Successful'}
+                    </span>
+                  </div>
+                );
+              })
             )}
           </div>
         </div>
@@ -386,9 +403,8 @@ export default function SensorPage() {
         <div className="info-banner">
           <strong>💡 About This Test:</strong> This page sends timestamped TCP packets to AWS 
           ({stats.server}:{stats.port}) and measures round-trip latency. <strong>"Retransmitted"</strong> 
-          packets took &gt;1 second to arrive (TCP detected loss and retransmitted them). 
-          <strong>"In Transit"</strong> shows packets currently being sent or retransmitted. 
-          <strong>"Delivery Rate"</strong> shows the percentage of packets successfully delivered.
+          are packets that took &gt;1 second to arrive (often due to TCP retransmissions). 
+          <strong>"In Transit"</strong> are packets currently being transmitted or retransmitted. 
           With normal TCP, retransmissions cause latency spikes - critical for real-time sensor data. 
           <strong>MPTCP Redundant</strong> will eliminate delays by sending duplicates on multiple paths simultaneously.
           {!useMptcp && (
