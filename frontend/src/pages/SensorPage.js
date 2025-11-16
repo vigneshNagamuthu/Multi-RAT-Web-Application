@@ -4,6 +4,7 @@ import './SensorPage.css';
 export default function SensorPage() {
   const [isTransmitting, setIsTransmitting] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isReconfiguring, setIsReconfiguring] = useState(false);
   const [stats, setStats] = useState({
     sentPackets: 0,
     receivedPackets: 0,
@@ -18,6 +19,7 @@ export default function SensorPage() {
     packetsPerSecond: 10
   });
   const [receivedSequences, setReceivedSequences] = useState([]);
+  const [retransmittedPackets, setRetransmittedPackets] = useState([]);
   const [packetsPerSecond, setPacketsPerSecond] = useState(10);
   
   const wsRef = useRef(null);
@@ -40,6 +42,9 @@ export default function SensorPage() {
           setStats(message.data);
           if (message.data.receivedSequences) {
             setReceivedSequences(message.data.receivedSequences.slice(-50)); // Keep last 50
+          }
+          if (message.data.retransmittedPackets) {
+            setRetransmittedPackets(message.data.retransmittedPackets);
           }
         }
       } catch (err) {
@@ -73,6 +78,9 @@ export default function SensorPage() {
       setIsTransmitting(data.isRunning);
       if (data.receivedSequences) {
         setReceivedSequences(data.receivedSequences.slice(-50));
+      }
+      if (data.retransmittedPackets) {
+        setRetransmittedPackets(data.retransmittedPackets);
       }
     } catch (err) {
       console.error('Error fetching status:', err);
@@ -122,11 +130,34 @@ export default function SensorPage() {
     try {
       await fetch('http://localhost:8080/api/sensor/tcp/reset', { method: 'POST' });
       setReceivedSequences([]);
+      setRetransmittedPackets([]);
       await fetchStatus();
     } catch (err) {
       console.error('Error resetting:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleReconfigureMptcp = async () => {
+    setIsReconfiguring(true);
+    try {
+      const response = await fetch('http://localhost:8080/api/sensor/tcp/reconfigure-mptcp', { 
+        method: 'POST' 
+      });
+      const data = await response.json();
+      
+      if (data.status === 'success') {
+        alert('✅ MPTCP Reconfigured!\n\n' + data.message);
+        await fetchStatus();
+      } else {
+        alert('❌ Reconfiguration failed:\n' + data.message);
+      }
+    } catch (err) {
+      console.error('Error reconfiguring MPTCP:', err);
+      alert('❌ Error reconfiguring MPTCP. Check backend logs.');
+    } finally {
+      setIsReconfiguring(false);
     }
   };
 
@@ -175,7 +206,7 @@ export default function SensorPage() {
           <div className="stat-card">
             <div className="stat-icon">⚠️</div>
             <div className="stat-content">
-              <div className="stat-label">Delayed Packets</div>
+              <div className="stat-label">Retransmitted</div>
               <div className="stat-value delayed">{stats.delayedPackets.toLocaleString()}</div>
               <div className="stat-sublabel">&gt;1000ms</div>
             </div>
@@ -195,13 +226,13 @@ export default function SensorPage() {
           </div>
           
           <div className="latency-stat-card">
-            <div className="latency-stat-label">In-Flight Packets</div>
+            <div className="latency-stat-label">In Transit</div>
             <div className="latency-stat-value">{stats.lostPackets.toLocaleString()}</div>
           </div>
           
           <div className="latency-stat-card">
-            <div className="latency-stat-label">Temporary Loss</div>
-            <div className="latency-stat-value">{stats.packetLossRate}</div>
+            <div className="latency-stat-label">Delivery Rate</div>
+            <div className="latency-stat-value">{stats.deliveryRate}</div>
           </div>
         </div>
 
@@ -209,6 +240,7 @@ export default function SensorPage() {
         <div className="control-panel">
           <div className="control-section">
             <h3>⚙️ Configuration</h3>
+
             <div className="config-grid">
               <div className="config-item">
                 <label>Server Address</label>
@@ -240,15 +272,6 @@ export default function SensorPage() {
                   className="config-input"
                 />
               </div>
-              <div className="config-item">
-                <label>Protocol</label>
-                <input 
-                  type="text" 
-                  value="TCP" 
-                  disabled 
-                  className="config-input"
-                />
-              </div>
             </div>
           </div>
 
@@ -276,40 +299,58 @@ export default function SensorPage() {
             >
               🔄 Reset
             </button>
+            
+            <button
+              onClick={handleReconfigureMptcp}
+              disabled={isReconfiguring}
+              className="btn-reconfigure"
+            >
+              {isReconfiguring ? '⏳ Reconfiguring...' : '🔧 Reconfigure MPTCP'}
+            </button>
           </div>
         </div>
 
         {/* Received Packets Display */}
         <div className="packets-display">
           <div className="packets-header">
-            <h3>� Received Packets at AWS Server</h3>
+            <h3>📊 Received Packets at AWS Server</h3>
             <span className="packet-count">{receivedSequences.length} packets shown (last 50)</span>
           </div>
-          <div className="packets-grid">
+          <div className="packets-list">
             {receivedSequences.length === 0 ? (
               <div className="no-packets">
-                <div className="no-packets-icon">📭</div>
+                <div className="no-packets-icon">🔭</div>
                 <p>No packets received yet</p>
                 <p className="no-packets-hint">Start transmission to see packets</p>
               </div>
             ) : (
-              receivedSequences.map((seqNum, index) => (
-                <div key={index} className="packet-item">
-                  <span className="packet-label">#{seqNum}</span>
-                </div>
-              ))
+              receivedSequences.map((seqNum, index) => {
+                const isRetransmitted = retransmittedPackets.includes(seqNum);
+                return (
+                  <div 
+                    key={index} 
+                    className={`packet-list-item ${isRetransmitted ? 'retransmitted' : 'successful'}`}
+                  >
+                    <span className="packet-number">#{seqNum}</span>
+                    <span className={`packet-status-badge ${isRetransmitted ? 'retransmitted' : 'successful'}`}>
+                      {isRetransmitted ? '⚠️ Retransmitted' : '✅ Successful'}
+                    </span>
+                  </div>
+                );
+              })
             )}
           </div>
         </div>
 
         {/* Info Banner */}
         <div className="info-banner">
-          <strong>💡 About This Test:</strong> This page sends timestamped TCP packets to AWS 
-          ({stats.server}:{stats.port}) and measures round-trip latency. <strong>"Delayed Packets"</strong> 
-          are packets that took &gt;1 second to arrive (often due to TCP retransmissions). 
-          <strong>"In-Flight Packets"</strong> are currently being transmitted or retransmitted. 
-          With normal TCP, retransmissions cause latency spikes - critical for real-time sensor data. 
-          <strong>MPTCP Redundant</strong> will eliminate delays by sending duplicates on multiple paths simultaneously.
+          <strong>💡 About This Test:</strong> This page sends timestamped packets to AWS 
+          ({stats.server}:{stats.port}) using MPTCP and measures round-trip latency. 
+          <strong>"Retransmitted"</strong> are packets that took &gt;1 second to arrive (often due to TCP retransmissions). 
+          <strong>"In Transit"</strong> are packets currently being transmitted or retransmitted. 
+          MPTCP uses multiple network paths for improved reliability and eliminates delays by sending duplicates on multiple paths simultaneously.
+          <br/><br/>
+          <strong>🔧 Network Changes:</strong> If you disconnect/reconnect a network interface, click 'Reconfigure MPTCP' before starting transmission again.
         </div>
       </div>
     </div>

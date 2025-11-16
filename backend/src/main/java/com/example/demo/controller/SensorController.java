@@ -71,4 +71,10 @@ public class SensorController {
         
         return ResponseEntity.ok(response);
     }
+    
+    @PostMapping("/tcp/reconfigure-mptcp")
+    public ResponseEntity<Map<String, Object>> reconfigureMptcp() {
+        Map<String, Object> result = tcpPacketSenderService.reconfigureMptcp();
+        return ResponseEntity.ok(result);
+    }
 }

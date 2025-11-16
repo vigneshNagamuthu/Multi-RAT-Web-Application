@@ -24,13 +24,26 @@ Thumbs.db
 # Build outputs
 build/
 dist/
+backend/target/
+*.jar
+*.war
+*.class
+
+# Maven
+.mvn/
+mvnw
+mvnw.cmd
 
 # Temporary files
 *.tmp
 *.bak
 *~
+*.zip
 
 # Environment variables
 .env
 .env.local
 .env.*.local
+
+# React build
+frontend/build/

@@ -10,6 +10,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.List;
+import java.util.ArrayList;
+
 
 @Service
 public class VideoStreamingService {
@@ -34,124 +37,149 @@ public class VideoStreamingService {
     /**
      * Start video streaming to AWS server at 13.212.221.200:6060
      */
-    public synchronized boolean startStreaming() {
-        if (isStreaming) {
-            System.out.println("⚠️ Streaming already active");
-            return false;
-        }
+    /**
+     * Start video streaming to AWS server at 13.212.221.200:6060 (no preferred device)
+     */
 
-        try {
-            // Detect OS for camera input
-            String os = System.getProperty("os.name").toLowerCase();
+public synchronized boolean startStreaming() {
+    // Default: no preferred camera, keep old behaviour
+    return startStreaming(null);
+}
 
-            System.out.println("🎥 Starting video stream to AWS: " + AWS_SERVER + ":" + VIDEO_PORT);
-            System.out.println("🖥️  Detected OS: " + os);
-            
-            // Start MPTCP proxy for video (Linux only)
-            if (os.contains("linux") || os.contains("nix") || os.contains("nux")) {
-                startVideoMptcpProxy();
-                try {
-                    Thread.sleep(500); // Give proxy time to start
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-            }
-
-            ProcessBuilder pb;
-
-            if (os.contains("win")) {
-                // Windows: Build argument list directly
-                pb = new ProcessBuilder(
-                    "ffmpeg",
-                    "-f", "dshow",
-                    "-rtbufsize", "100M",
-                    "-framerate", "30",
-                    "-video_size", "1280x720",
-                    "-i", "video=Integrated Camera",
-                    "-vcodec", "libx264",
-                    "-preset", "ultrafast",
-                    "-tune", "zerolatency",
-                    "-b:v", "2M",
-                    "-maxrate", "2M",
-                    "-bufsize", "4M",
-                    "-g", "60",
-                    "-keyint_min", "60",
-                    "-f", "mpegts",
-                    "tcp://" + AWS_SERVER + ":" + VIDEO_PORT
-                );
-            } else if (os.contains("mac")) {
-                // macOS
-                pb = new ProcessBuilder(
-                    "ffmpeg",
-                    "-f", "avfoundation",
-                    "-framerate", "30",
-                    "-video_size", "1280x720",
-                    "-i", "0:none",
-                    "-vcodec", "libx264",
-                    "-preset", "ultrafast",
-                    "-tune", "zerolatency",
-                    "-b:v", "2M",
-                    "-maxrate", "2M",
-                    "-bufsize", "4M",
-                    "-g", "60",
-                    "-keyint_min", "60",
-                    "-f", "mpegts",
-                    "tcp://" + AWS_SERVER + ":" + VIDEO_PORT
-                );
-            } else {
-                // Linux - Auto-detect video device
-                String videoDevice = detectLinuxVideoDevice();
-                System.out.println("📹 Using video device: " + videoDevice);
-                System.out.println("🔀 Using MPTCP for streaming with scheduler: " + getCurrentScheduler());
-
-                // Based on your working CLI command:
-                // ffmpeg -f v4l2 -i /dev/video0 -vcodec libx264 -preset ultrafast -tune zerolatency -f mpegts tcp://13.212.221.200:6060
-                // Your cam: 640x480, v4l2, YUYV, ~30fps
-                String fps = "30";
-                String resolution = "640x480";
-                int gopSize = Integer.parseInt(fps) * 2; // keyframe every 2s
-
-                // Connect to local proxy which forwards to AWS with sourceport=6060
-                pb = new ProcessBuilder(
-                    "ffmpeg",
-                    "-f", "v4l2",
-                    "-framerate", fps,
-                    "-video_size", resolution,
-                    "-i", videoDevice,
-                    "-vcodec", "libx264",
-                    "-preset", "ultrafast",
-                    "-tune", "zerolatency",
-                    "-b:v", "2M",
-                    "-maxrate", "2M",
-                    "-bufsize", "4M",
-                    "-g", String.valueOf(gopSize),
-                    "-keyint_min", String.valueOf(gopSize),
-                    "-f", "mpegts",
-                    "tcp://127.0.0.1:" + VIDEO_PROXY_PORT  // Connect to local proxy
-                );
-            }
-
-            System.out.println("FFmpeg command: " + String.join(" ", pb.command()));
-
-            pb.redirectErrorStream(true);
-
-            streamProcess = pb.start();
-            isStreaming = true;
-
-            // Monitor FFmpeg output and extract metrics
-            outputThread = new Thread(this::readStreamOutputWithMetrics);
-            outputThread.start();
-
-            System.out.println("✅ Video streaming started successfully");
-            return true;
-
-        } catch (Exception e) {
-            System.err.println("❌ Failed to start streaming: " + e.getMessage());
-            e.printStackTrace();
-            isStreaming = false;
-            return false;
-        }
+/**
+ * Start video streaming with an optional preferred Linux device path
+ * e.g. "/dev/video2". If null/blank or invalid, we auto-detect.
+ */
+public synchronized boolean startStreaming(String preferredDevicePath) {
+    if (isStreaming) {
+        System.out.println("⚠️ Streaming already active");
+        return false;
     }
+
+    try {
+        // Detect OS for camera input
+        String os = System.getProperty("os.name").toLowerCase();
+
+        System.out.println("🎥 Starting video stream to AWS: " + AWS_SERVER + ":" + VIDEO_PORT);
+        System.out.println("🖥️  Detected OS: " + os);
+
+        // Start MPTCP proxy for video (Linux only)
+        if (os.contains("linux") || os.contains("nix") || os.contains("nux")) {
+            startVideoMptcpProxy();
+            try {
+                Thread.sleep(500); // Give proxy time to start
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+
+        ProcessBuilder pb;
+
+        if (os.contains("win")) {
+            // Windows: DirectShow input (unchanged)
+            pb = new ProcessBuilder(
+                "ffmpeg",
+                "-f", "dshow",
+                "-rtbufsize", "100M",
+                "-framerate", "30",
+                "-video_size", "1280x720",
+                "-i", "video=Integrated Camera",
+                "-vcodec", "libx264",
+                "-preset", "ultrafast",
+                "-tune", "zerolatency",
+                "-b:v", "2M",
+                "-maxrate", "2M",
+                "-bufsize", "4M",
+                "-g", "60",
+                "-keyint_min", "60",
+                "-f", "mpegts",
+                "tcp://" + AWS_SERVER + ":" + VIDEO_PORT
+            );
+        } else if (os.contains("mac")) {
+            // macOS: AVFoundation input (unchanged)
+            pb = new ProcessBuilder(
+                "ffmpeg",
+                "-f", "avfoundation",
+                "-framerate", "30",
+                "-video_size", "1280x720",
+                "-i", "0:none",
+                "-vcodec", "libx264",
+                "-preset", "ultrafast",
+                "-tune", "zerolatency",
+                "-b:v", "2M",
+                "-maxrate", "2M",
+                "-bufsize", "4M",
+                "-g", "60",
+                "-keyint_min", "60",
+                "-f", "mpegts",
+                "tcp://" + AWS_SERVER + ":" + VIDEO_PORT
+            );
+        } else {
+            // Linux – use preferred device if given, otherwise auto-detect
+            String videoDevice;
+
+            if (preferredDevicePath != null && !preferredDevicePath.isBlank()) {
+                videoDevice = preferredDevicePath.trim();
+                System.out.println("📌 Preferred video device requested: " + videoDevice);
+
+                java.io.File devFile = new java.io.File(videoDevice);
+                if (!devFile.exists()) {
+                    System.out.println("⚠️ Preferred device does not exist, falling back to auto-detect");
+                    videoDevice = detectLinuxVideoDevice();
+                }
+            } else {
+                // Old behaviour: let your existing logic choose the device
+                videoDevice = detectLinuxVideoDevice();
+            }
+
+            System.out.println("📹 Using video device: " + videoDevice);
+            System.out.println("🔀 Using MPTCP for streaming with scheduler: " + getCurrentScheduler());
+
+            // Same config as your working CLI
+            String fps = "30";
+            String resolution = "640x480";
+            int gopSize = Integer.parseInt(fps) * 2; // keyframe every 2s
+
+            // Connect to local proxy which forwards to AWS with sourceport=6060
+            pb = new ProcessBuilder(
+                "ffmpeg",
+                "-f", "v4l2",
+                "-framerate", fps,
+                "-video_size", resolution,
+                "-i", videoDevice,
+                "-vcodec", "libx264",
+                "-preset", "ultrafast",
+                "-tune", "zerolatency",
+                "-b:v", "2M",
+                "-maxrate", "2M",
+                "-bufsize", "4M",
+                "-g", String.valueOf(gopSize),
+                "-keyint_min", String.valueOf(gopSize),
+                "-f", "mpegts",
+                "tcp://127.0.0.1:" + VIDEO_PROXY_PORT  // Local MPTCP proxy
+            );
+        }
+
+        System.out.println("FFmpeg command: " + String.join(" ", pb.command()));
+        pb.redirectErrorStream(true);
+
+        streamProcess = pb.start();
+        isStreaming = true;
+
+        outputThread = new Thread(this::readStreamOutputWithMetrics);
+        outputThread.start();
+
+        System.out.println("✅ Video streaming started successfully");
+        return true;
+
+    } catch (Exception e) {
+        System.err.println("❌ Failed to start streaming: " + e.getMessage());
+        e.printStackTrace();
+        isStreaming = false;
+        return false;
+    }
+}
+
 
     /**
      * Stop video streaming
@@ -672,6 +700,90 @@ public class VideoStreamingService {
                 return false;
             }
         }
+    }
+
+    public static class VideoDeviceInfo {
+        private final String name;
+        private final String path;
+
+        public VideoDeviceInfo(String name, String path) {
+            this.name = name;
+            this.path = path;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public String getPath() {
+            return path;
+        }
+    }
+
+    /**
+     * List available video devices (Linux).
+     * Keep it simple and robust: show all /dev/video* nodes,
+     * and use v4l2-ctl only to get pretty names if available.
+     */
+    public List<VideoDeviceInfo> listVideoDevices() {
+        List<VideoDeviceInfo> devices = new ArrayList<>();
+        String os = System.getProperty("os.name").toLowerCase();
+
+        // Only implemented for Linux
+        if (!(os.contains("linux") || os.contains("nix") || os.contains("nux"))) {
+            System.out.println("📵 Non-Linux OS, no /dev/video* devices to list");
+            return devices;
+        }
+
+        // 1) Try v4l2-ctl --list-devices for nice names
+        try {
+            ProcessBuilder pb = new ProcessBuilder("bash", "-c", "v4l2-ctl --list-devices 2>/dev/null");
+            Process process = pb.start();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String line;
+            String currentName = null;
+
+            while ((line = reader.readLine()) != null) {
+                line = line.trim();
+                if (line.isEmpty()) {
+                    continue;
+                }
+
+                // Device name line: "UGREEN Camera: UGREEN Camera (usb-...)"
+                if (line.endsWith(":") && !line.contains("/dev/")) {
+                    currentName = line.substring(0, line.length() - 1);
+                }
+                // Device path line: "/dev/videoX"
+                else if (line.startsWith("/dev/video")) {
+                    String path = line.trim();
+                    String name = (currentName != null ? currentName : path);
+                    devices.add(new VideoDeviceInfo(name, path));
+                }
+            }
+
+            process.waitFor();
+        } catch (Exception e) {
+            System.out.println("⚠️ Could not run v4l2-ctl: " + e.getMessage());
+        }
+
+        // 2) Fallback: brute-force /dev/video0–9 if the above returned nothing
+        if (devices.isEmpty()) {
+            System.out.println("🔍 Fallback: scanning /dev/video[0-9] ...");
+            for (int i = 0; i < 10; i++) {
+                String path = "/dev/video" + i;
+                java.io.File devFile = new java.io.File(path);
+                if (devFile.exists()) {
+                    devices.add(new VideoDeviceInfo("Camera " + path, path));
+                }
+            }
+        }
+
+        System.out.println("🎦 Devices exposed to UI:");
+        for (VideoDeviceInfo d : devices) {
+            System.out.println("   - " + d.getName() + " (" + d.getPath() + ")");
+        }
+
+        return devices;
     }
 
     public boolean isStreaming() {

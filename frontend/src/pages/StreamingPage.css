@@ -389,6 +389,47 @@
   transform: none !important;
 }
 
+/* Camera Selector */
+.camera-selector {
+  padding: 16px 24px 8px 24px;
+  border-top: 1px solid #edf2f7;
+  margin-top: 8px;
+}
+
+.camera-selector label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: #718096;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.camera-selector select {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  font-size: 14px;
+  color: #2d3748;
+  background: #f7fafc;
+  outline: none;
+  transition: border 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.camera-selector select:focus {
+  border-color: #3182ce;
+  box-shadow: 0 0 0 1px rgba(49, 130, 206, 0.3);
+  background: #ffffff;
+}
+
+.camera-hint {
+  margin-top: 4px;
+  font-size: 11px;
+  color: #718096;
+}
+
 /* Streaming Notice */
 .streaming-notice {
   display: flex;
@@ -487,3 +528,4 @@
     font-size: 12px;
   }
 }
+

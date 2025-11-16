@@ -17,6 +17,45 @@ This guide covers setting up the **client-side application** (your laptop/develo
 
 ---
 
+## ⚠️ IMPORTANT: Configure Sudo Permissions (Linux Only)
+
+**This MUST be done FIRST before installation!**
+
+The application needs passwordless sudo access for MPTCP reconfiguration and port management. Configure this once at the start:
+
+```bash
+# Edit sudoers file safely
+sudo visudo
+```
+
+Add this line at the end (replace `youruser` with your actual username):
+
+```bash
+youruser ALL=(ALL) NOPASSWD: /usr/bin/fuser, /usr/sbin/ip, /usr/sbin/sysctl
+```
+
+**Example:**
+```bash
+dan ALL=(ALL) NOPASSWD: /usr/bin/fuser, /usr/sbin/ip, /usr/sbin/sysctl
+```
+
+**Why this is needed:**
+- `/usr/bin/fuser` - Kill processes using specific ports (port 5000 cleanup)
+- `/usr/sbin/ip` - Configure MPTCP endpoints when network interfaces change
+- `/usr/sbin/sysctl` - Read/write MPTCP kernel parameters
+
+**To verify:**
+```bash
+# Test each command (should not ask for password)
+sudo fuser -k 5000/tcp
+sudo ip mptcp endpoint show
+sudo sysctl net.mptcp.enabled
+```
+
+If any command asks for a password, check your visudo configuration.
+
+---
+
 ## 🔧 Installation
 
 ### 1. Install System Dependencies
@@ -97,7 +136,9 @@ sudo sysctl -w net.mptcp.scheduler=clientportsched
 
 **What each tool does:**
 - **mptcpize:** Wraps applications to use MPTCP instead of regular TCP
-- **socat:** Creates TCP proxy with custom source ports (needed for port-based MPTCP scheduler routing)
+- **Python script:** Automatically configures MPTCP endpoints for all network interfaces
+
+**Note:** The setup script will automatically configure MPTCP endpoints. You can also manually reconfigure using the "🔧 Reconfigure MPTCP" button in the Sensor page UI.
 
 ---
 
@@ -240,7 +281,7 @@ npm start
 
 **What happens:**
 - Backend sends numbered packets with timestamps
-- Uses socat proxy with **sourceport=5000** (for scheduler routing)
+- Direct MPTCP connection with **sourceport=5000** (for scheduler routing)
 - AWS echoes packets back
 - Latency is calculated per packet
 - Statistics are displayed in real-time
@@ -250,6 +291,14 @@ npm start
 - Packet loss rate
 - Average/min/max latency
 - Delayed packets (>1000ms)
+
+**Network Changes:**
+If you disconnect/reconnect a network interface (e.g., unplug Ethernet, switch WiFi):
+1. Click: **🔧 Reconfigure MPTCP** (in Sensor page)
+2. Wait for confirmation
+3. Click: **▶️ Start Transmission** again
+
+This reconfigures MPTCP endpoints without restarting the entire application.
 
 ---
 
@@ -273,18 +322,29 @@ aws.sensor.port=5000
 
 The application uses **custom source ports** for MPTCP scheduler routing:
 
-- **Port 5000:** Sensor data → Uses socat proxy with `sourceport=5000`
+- **Port 5000:** Sensor data → Direct MPTCP connection with `sourceport=5000`
 - **Port 6060:** Video stream → Uses socat proxy with `sourceport=6060`
 
 Your custom MPTCP scheduler can detect these ports and route traffic accordingly.
 
 **How it works:**
+
+**Sensor (Port 5000):**
 ```
-Java/FFmpeg → localhost:5001/6062 (local socat proxy)
-              ↓
-              mptcpize + socat with sourceport=5000/6060
-              ↓
-              AWS:5000/6060 (with correct source port for routing)
+Java application → bind to port 5000 → connect to AWS:5000
+                   ↓
+                   mptcpize enables MPTCP at OS level
+                   ↓
+                   AWS:5000 (direct MPTCP with sourceport=5000)
+```
+
+**Video (Port 6060):**
+```
+FFmpeg → localhost:6062 (local socat proxy)
+         ↓
+         mptcpize + socat with sourceport=6060
+         ↓
+         AWS:6060 (with correct source port for routing)
 ```
 
 ---
@@ -409,15 +469,40 @@ mvn clean install
 
 ### Sensor Packets Not Restarting
 
-**Error:** Cannot start transmission after stopping
+**Error:** Cannot start transmission after stopping (port 5000 in use)
 
 **Fix:**
 ```bash
-# Kill lingering socat processes
-pkill -f 'socat.*5001'
-fuser -k 5000/tcp
+# Kill processes using port 5000
+sudo fuser -k 5000/tcp
 
-# Or restart backend
+# Wait a moment
+sleep 1
+
+# Or use the Reconfigure MPTCP button in the UI
+```
+
+---
+
+### MPTCP Reconfiguration Failed
+
+**Error:** "Error running reconfiguration" when clicking Reconfigure MPTCP button
+
+**Fix:**
+```bash
+# 1. Check sudoers configuration
+sudo visudo
+# Verify line exists:
+# youruser ALL=(ALL) NOPASSWD: /usr/bin/fuser, /usr/sbin/ip, /usr/sbin/sysctl
+
+# 2. Check Python script exists
+ls -la /home/dan/Documents/GitHub/Multi-RAT-Web-Application/mptcp_quick_setup.py
+
+# 3. Make script executable
+chmod +x /home/dan/Documents/GitHub/Multi-RAT-Web-Application/mptcp_quick_setup.py
+
+# 4. Test script manually
+python3 /home/dan/Documents/GitHub/Multi-RAT-Web-Application/mptcp_quick_setup.py
 ```
 
 ---
@@ -442,15 +527,14 @@ nc -zv 13.212.221.200 6060
 
 ## 📊 Port Reference
 
-| Port | Service | Direction | Protocol |
-|------|---------|-----------|----------|
-| 8080 | Backend API | Local | HTTP |
-| 3000 | Frontend | Local | HTTP |
-| 5001 | Sensor MPTCP Proxy | Local | TCP |
-| 6062 | Video MPTCP Proxy | Local | TCP |
-| 5000 | Sensor Listener | AWS | MPTCP (sourceport=5000) |
-| 6060 | Video Relay Input | AWS | MPTCP (sourceport=6060) |
-| 6061 | HLS Output | AWS | HTTP |
+| Port | Service | Direction | Protocol | Notes |
+|------|---------|-----------|----------|-------|
+| 8080 | Backend API | Local | HTTP | REST API & WebSockets |
+| 3000 | Frontend | Local | HTTP | React dev server |
+| 6062 | Video MPTCP Proxy | Local | TCP | Socat proxy for FFmpeg |
+| 5000 | Sensor Connection | Local→AWS | MPTCP | Direct connection with sourceport=5000 |
+| 6060 | Video Relay Input | Local→AWS | MPTCP | Via socat with sourceport=6060 |
+| 6061 | HLS Output | AWS | HTTP | Video playback endpoint |
 
 ---
 

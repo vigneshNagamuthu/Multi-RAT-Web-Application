@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.*;
 import java.util.concurrent.*;
@@ -14,7 +15,6 @@ public class TcpPacketSenderService {
     
     private final String AWS_SERVER = "13.212.221.200";
     private final int AWS_PORT = 5000;
-    private final int LOCAL_PROXY_PORT = 5001; // Local MPTCP proxy
     
     @Autowired
     private SensorWebSocketHandler webSocketHandler;
@@ -23,12 +23,12 @@ public class TcpPacketSenderService {
     private Socket socket;
     private PrintWriter out;
     private BufferedReader in;
-    private Process proxyProcess;
     
     private boolean isRunning = false;
     private int sentPackets = 0;
     private int receivedPackets = 0;
     private List<Integer> receivedSequences = new CopyOnWriteArrayList<>();
+    private Set<Integer> retransmittedPackets = ConcurrentHashMap.newKeySet(); // Track retransmitted packets
     private Map<Integer, Long> sentTimestamps = new ConcurrentHashMap<>();
     private List<Long> latencies = new CopyOnWriteArrayList<>();
     private int delayedPackets = 0; // Packets with >1000ms latency
@@ -42,21 +42,38 @@ public class TcpPacketSenderService {
         }
         
         try {
-            // Connect to AWS server using MPTCP via socat proxy
-            System.out.println("📡 Connecting to AWS server with MPTCP: " + AWS_SERVER + ":" + AWS_PORT);
+            // MPTCP mode - direct connection with bound source port
+            System.out.println("🔡 Connecting to AWS server with MPTCP: " + AWS_SERVER + ":" + AWS_PORT);
+            System.out.println("   Using source port 5000");
             
-            // Start local MPTCP proxy using socat
-            startMptcpProxy();
+            // Retry logic for socket connection
+            int maxRetries = 3;
+            IOException lastException = null;
             
-            // Give proxy time to start
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
+            for (int attempt = 1; attempt <= maxRetries; attempt++) {
+                try {
+                    socket = new Socket();
+                    socket.setReuseAddress(true);
+                    socket.bind(new InetSocketAddress("0.0.0.0", 5000));
+                    socket.connect(new InetSocketAddress(AWS_SERVER, AWS_PORT));
+                    lastException = null;
+                    break; // Success
+                } catch (IOException e) {
+                    lastException = e;
+                    if (socket != null) {
+                        try { socket.close(); } catch (IOException ignored) {}
+                    }
+                    if (attempt < maxRetries) {
+                        System.err.println("⚠️ Connection attempt " + attempt + " failed, retrying in 1s...");
+                        Thread.sleep(1000);
+                    }
+                }
             }
             
-            // Connect to local proxy which forwards to AWS with MPTCP
-            socket = new Socket("127.0.0.1", 5001); // Local proxy port
+            if (lastException != null) {
+                throw lastException; // All retries failed
+            }
+            
             out = new PrintWriter(socket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             
@@ -64,6 +81,7 @@ public class TcpPacketSenderService {
             sentPackets = 0;
             receivedPackets = 0;
             receivedSequences.clear();
+            retransmittedPackets.clear();
             sentTimestamps.clear();
             latencies.clear();
             delayedPackets = 0;
@@ -78,12 +96,15 @@ public class TcpPacketSenderService {
             // Start receiver thread
             scheduler.submit(this::receivePackets);
             
-            System.out.println("✅ TCP packet transmission started");
+            System.out.println("✅ Packet transmission started (MPTCP mode)");
             return true;
             
-        } catch (IOException e) {
+        } catch (IOException | InterruptedException e) {
             System.err.println("❌ Failed to connect to AWS server: " + e.getMessage());
             isRunning = false;
+            if (e instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
             return false;
         }
     }
@@ -112,100 +133,7 @@ public class TcpPacketSenderService {
             System.err.println("Error closing connection: " + e.getMessage());
         }
         
-        // Stop MPTCP proxy
-        stopMptcpProxy();
-        
-        System.out.println("🛑 TCP packet transmission stopped");
-    }
-    
-    /**
-     * Start local MPTCP proxy using socat
-     * Forwards local connections to AWS with MPTCP
-     * Uses sourceport=5000 for custom MPTCP scheduler routing
-     */
-    private void startMptcpProxy() {
-        // Stop any existing proxy first
-        stopMptcpProxy();
-        
-        // Kill any lingering socat processes on port 5001 and release port 5000
-        try {
-            ProcessBuilder killSocat = new ProcessBuilder("bash", "-c", 
-                "pkill -f 'socat.*" + LOCAL_PROXY_PORT + "' || true");
-            killSocat.start().waitFor(1, TimeUnit.SECONDS);
-            
-            // Also kill any processes using source port 5000
-            ProcessBuilder killPort5000 = new ProcessBuilder("bash", "-c",
-                "fuser -k 5000/tcp || true");
-            killPort5000.start().waitFor(1, TimeUnit.SECONDS);
-            
-            Thread.sleep(500); // Give OS time to release the ports
-        } catch (Exception e) {
-            // Ignore cleanup errors
-        }
-        
-        try {
-            // Use socat to create MPTCP proxy with port 5000 for scheduler routing
-            // sourceport=5000 needed for custom MPTCP scheduler to identify sensor traffic
-            // SO_REUSEADDR allows immediate rebinding after stop
-            ProcessBuilder pb = new ProcessBuilder(
-                "bash", "-c",
-                "mptcpize run socat TCP-LISTEN:" + LOCAL_PROXY_PORT + 
-                ",reuseaddr,fork TCP:" + AWS_SERVER + ":" + AWS_PORT + 
-                ",sourceport=5000,reuseaddr"
-            );
-            
-            pb.redirectErrorStream(true);
-            proxyProcess = pb.start();
-            
-            System.out.println("✅ MPTCP proxy started on port " + LOCAL_PROXY_PORT);
-            System.out.println("   Forwarding to " + AWS_SERVER + ":" + AWS_PORT + " with source port 5000");
-            System.out.println("   🎯 Using port 5000 for custom MPTCP scheduler routing");
-            
-            // Monitor proxy output in background
-            new Thread(() -> {
-                try (BufferedReader reader = new BufferedReader(
-                        new InputStreamReader(proxyProcess.getInputStream()))) {
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        if (line.contains("error") || line.contains("Error")) {
-                            System.err.println("[MPTCP Proxy] " + line);
-                        }
-                    }
-                } catch (IOException e) {
-                    // Ignore - proxy stopped
-                }
-            }).start();
-            
-        } catch (IOException e) {
-            System.err.println("❌ Failed to start MPTCP proxy: " + e.getMessage());
-            System.err.println("💡 Make sure 'socat' and 'mptcpize' are installed");
-        }
-    }
-    
-    /**
-     * Stop MPTCP proxy
-     */
-    private void stopMptcpProxy() {
-        if (proxyProcess != null && proxyProcess.isAlive()) {
-            proxyProcess.destroy();
-            try {
-                if (!proxyProcess.waitFor(2, TimeUnit.SECONDS)) {
-                    proxyProcess.destroyForcibly();
-                }
-            } catch (InterruptedException e) {
-                proxyProcess.destroyForcibly();
-            }
-            System.out.println("🛑 MPTCP proxy stopped");
-        }
-        
-        // Force kill any lingering socat processes
-        try {
-            ProcessBuilder killSocat = new ProcessBuilder("bash", "-c", 
-                "pkill -f 'socat.*" + LOCAL_PROXY_PORT + "' || true");
-            killSocat.start().waitFor(1, TimeUnit.SECONDS);
-        } catch (Exception e) {
-            // Ignore cleanup errors
-        }
+        System.out.println("🛑 Packet transmission stopped");
     }
     
     private void sendPacket() {
@@ -251,9 +179,10 @@ public class TcpPacketSenderService {
                     long latency = receivedTime - sentTime;
                     latencies.add(latency);
                     
-                    // Track delayed packets (>1000ms)
+                    // Track delayed packets (>1000ms) - likely retransmissions
                     if (latency > 1000) {
                         delayedPackets++;
+                        retransmittedPackets.add(seqNum); // Mark as retransmitted
                         System.out.println("⚠️ Delayed packet #" + seqNum + " - Latency: " + latency + "ms");
                     }
                     
@@ -287,6 +216,8 @@ public class TcpPacketSenderService {
         status.put("lostPackets", sentPackets - receivedPackets);
         status.put("packetLossRate", sentPackets > 0 ? 
             String.format("%.2f%%", (sentPackets - receivedPackets) * 100.0 / sentPackets) : "0.00%");
+        status.put("deliveryRate", sentPackets > 0 ? 
+            String.format("%.2f%%", receivedPackets * 100.0 / sentPackets) : "0.00%");
         
         // Calculate latency statistics
         long avgLatency = 0;
@@ -307,6 +238,7 @@ public class TcpPacketSenderService {
         status.put("port", AWS_PORT);
         status.put("packetsPerSecond", packetsPerSecond);
         status.put("receivedSequences", new ArrayList<>(receivedSequences));
+        status.put("retransmittedPackets", new ArrayList<>(retransmittedPackets));
         
         return status;
     }
@@ -318,6 +250,7 @@ public class TcpPacketSenderService {
         sentPackets = 0;
         receivedPackets = 0;
         receivedSequences.clear();
+        retransmittedPackets.clear();
         sentTimestamps.clear();
         latencies.clear();
         delayedPackets = 0;
@@ -329,5 +262,54 @@ public class TcpPacketSenderService {
     
     public void setPacketsPerSecond(int rate) {
         this.packetsPerSecond = Math.max(1, Math.min(100, rate)); // Limit 1-100 pps
+    }
+    
+    public Map<String, Object> reconfigureMptcp() {
+        Map<String, Object> result = new HashMap<>();
+        
+        // Stop transmission if running
+        if (isRunning) {
+            stopSending();
+        }
+        
+        try {
+            // Kill any processes using port 5000
+            ProcessBuilder killPort = new ProcessBuilder("bash", "-c", "sudo fuser -k 5000/tcp || true");
+            killPort.start().waitFor(2, TimeUnit.SECONDS);
+            Thread.sleep(500);
+            
+            // Run Python configuration script
+            ProcessBuilder pb = new ProcessBuilder("python3", "/home/dan/Documents/GitHub/Multi-RAT-Web-Application/mptcp_quick_setup.py");
+            pb.redirectErrorStream(true);
+            Process process = pb.start();
+            
+            // Capture output
+            StringBuilder output = new StringBuilder();
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    output.append(line).append("\n");
+                }
+            }
+            
+            boolean success = process.waitFor(10, TimeUnit.SECONDS) && process.exitValue() == 0;
+            
+            if (success) {
+                result.put("status", "success");
+                result.put("message", "MPTCP endpoints reconfigured successfully.\nReady to start transmission.");
+                System.out.println("✅ MPTCP reconfigured successfully");
+            } else {
+                result.put("status", "error");
+                result.put("message", "Python script failed. Check logs.\n" + output.toString());
+                System.err.println("❌ MPTCP reconfiguration failed: " + output.toString());
+            }
+            
+        } catch (Exception e) {
+            result.put("status", "error");
+            result.put("message", "Error running reconfiguration: " + e.getMessage());
+            System.err.println("❌ Error reconfiguring MPTCP: " + e.getMessage());
+        }
+        
+        return result;
     }
 }

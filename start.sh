@@ -11,6 +11,7 @@
 # Prerequisites:
 #   - Run ./setup.sh first to install dependencies
 #   - AWS relay server should be running on 13.212.221.200
+#   - MPTCP configuration: Run python3 ~/Desktop/mptcp_quick_setup.py first
 # =============================================================================
 
 set -e  # Exit on any error
@@ -38,6 +39,29 @@ if [ ! -f "backend/target/demo-0.0.1-SNAPSHOT.jar" ]; then
     mvn clean install -DskipTests
     cd ..
 fi
+
+# =============================================================================
+# MPTCP Configuration Check
+# =============================================================================
+
+echo "🔧 Checking MPTCP configuration..."
+MPTCP_ENDPOINTS=$(ip mptcp endpoint show 2>/dev/null | wc -l)
+
+if [ "$MPTCP_ENDPOINTS" -lt 2 ]; then
+    echo "⚠️  MPTCP endpoints not configured (found $MPTCP_ENDPOINTS endpoints)"
+    echo "💡 Configuring MPTCP now..."
+    
+    if [ -f "$HOME/Desktop/mptcp_quick_setup.py" ]; then
+        python3 "$HOME/Desktop/mptcp_quick_setup.py"
+        echo "✅ MPTCP configured"
+    else
+        echo "❌ Warning: mptcp_quick_setup.py not found at ~/Desktop/"
+        echo "   MPTCP may not work properly"
+    fi
+else
+    echo "✅ MPTCP already configured ($MPTCP_ENDPOINTS endpoints)"
+fi
+echo ""
 
 # =============================================================================
 # Cleanup function (called on Ctrl+C)
@@ -73,8 +97,11 @@ echo "📦 Starting Backend Server..."
 echo "-------------------------------------------"
 cd backend
 
-# Start backend in background
-mvn spring-boot:run > ../backend.log 2>&1 &
+# Start backend with MPTCP support in background
+echo "   Using mptcpize to enable MPTCP at OS level"
+echo "   ⚠️  Note: 'Reconfigure MPTCP' will restart this backend"
+
+mptcpize run java -jar target/demo-0.0.1-SNAPSHOT.jar > ../backend.log 2>&1 &
 BACKEND_PID=$!
 
 cd ..
@@ -153,13 +180,14 @@ echo "📝 Logs:"
 echo "   Backend:  tail -f backend.log"
 echo "   Frontend: tail -f frontend.log"
 echo ""
-echo "⚠️  AWS Relay Status:"
-if curl -s http://13.212.221.200:6061/health > /dev/null 2>&1; then
-    echo "   ✅ AWS relay is accessible (13.212.221.200:6061)"
-else
-    echo "   ❌ AWS relay unreachable (13.212.221.200:6061)"
-    echo "   💡 Make sure relay.js is running on AWS with PM2"
-fi
+echo "⚙️  MPTCP Status:"
+echo "   Endpoints: $(ip mptcp endpoint show | wc -l)"
+echo "   Scheduler: $(sysctl -n net.mptcp.scheduler 2>/dev/null || echo 'unknown')"
+echo ""
+echo "⚠️  Important Notes:"
+echo "   • Pressing 'Reconfigure MPTCP' in the UI will restart the backend"
+echo "   • If backend stops, you'll need to restart this script"
+echo "   • After network changes, use 'Reconfigure MPTCP' button in UI"
 echo ""
 echo "🛑 Press Ctrl+C to stop both servers"
 echo ""
