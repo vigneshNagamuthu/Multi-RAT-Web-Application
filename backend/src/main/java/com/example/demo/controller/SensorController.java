@@ -35,12 +35,12 @@ public class SensorController {
         
         if (started) {
             response.put("status", "success");
-            response.put("message", "TCP packet transmission started");
+            response.put("message", "Packet transmission started");
             response.putAll(tcpPacketSenderService.getStatus());
             return ResponseEntity.ok(response);
         } else {
             response.put("status", "error");
-            response.put("message", "Failed to start TCP transmission. Check AWS server connection.");
+            response.put("message", "Failed to start transmission. Check AWS server connection.");
             return ResponseEntity.badRequest().body(response);
         }
     }
@@ -51,7 +51,7 @@ public class SensorController {
         
         Map<String, String> response = new HashMap<>();
         response.put("status", "success");
-        response.put("message", "TCP packet transmission stopped");
+        response.put("message", "Packet transmission stopped");
         
         return ResponseEntity.ok(response);
     }
@@ -67,7 +67,7 @@ public class SensorController {
         
         Map<String, String> response = new HashMap<>();
         response.put("status", "success");
-        response.put("message", "TCP sender reset");
+        response.put("message", "Sender reset");
         
         return ResponseEntity.ok(response);
     }

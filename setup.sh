@@ -79,14 +79,6 @@ else
     MISSING_DEPS+=("FFmpeg (sudo apt install ffmpeg)")
 fi
 
-# Check socat (required for MPTCP sensor packets)
-if command -v socat &> /dev/null; then
-    echo "✅ socat detected"
-else
-    echo "❌ socat not found (required for MPTCP sensor testing)"
-    MISSING_DEPS+=("socat (sudo apt install socat)")
-fi
-
 # Check MPTCP
 if command -v mptcpize &> /dev/null; then
     echo "✅ mptcpize detected"

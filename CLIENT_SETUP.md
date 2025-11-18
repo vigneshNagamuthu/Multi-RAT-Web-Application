@@ -35,7 +35,6 @@ sudo apt install -y \
     npm \
     ffmpeg \
     v4l-utils \
-    socat \
     mptcpize
 
 # Verify installations
@@ -44,7 +43,6 @@ mvn -version
 node -v          # Should be 14+
 npm -v
 ffmpeg -version
-socat -V
 mptcpize --version
 ```
 
@@ -268,14 +266,14 @@ aws.video.port=6060
 aws.sensor.port=5000
 ```
 
-### MPTCP Port-Based Routing
+### MPTCP Direct Connection Architecture
 
-The application uses **custom source ports** for MPTCP scheduler routing:
+The application uses **direct MPTCP connections** for both video and sensor data:
 
-- **Port 5000:** Sensor data → Direct MPTCP connection with `sourceport=5000`
-- **Port 6060:** Video stream → Uses socat proxy with `sourceport=6060`
+- **Port 5000:** Sensor data → Direct MPTCP connection
+- **Port 6060:** Video stream → Direct MPTCP connection
 
-Your custom MPTCP scheduler can detect these ports and route traffic accordingly.
+Both connections use `mptcpize` at the OS level to enable MPTCP support.
 
 **How it works:**
 
@@ -285,16 +283,16 @@ Java application → bind to port 5000 → connect to AWS:5000
                    ↓
                    mptcpize enables MPTCP at OS level
                    ↓
-                   AWS:5000 (direct MPTCP with sourceport=5000)
+                   AWS:5000 (direct MPTCP connection)
 ```
 
 **Video (Port 6060):**
 ```
-FFmpeg → localhost:6062 (local socat proxy)
+FFmpeg → connect to AWS:6060
          ↓
-         mptcpize + socat with sourceport=6060
+         mptcpize enables MPTCP at OS level
          ↓
-         AWS:6060 (with correct source port for routing)
+         AWS:6060 (direct MPTCP connection)
 ```
 
 ---
@@ -404,8 +402,7 @@ kill -9 <PID>
 # 1. Enable MPTCP
 sudo sysctl -w net.mptcp.enabled=1
 
-# 2. Verify tools installed
-which socat
+# 2. Verify mptcpize installed
 which mptcpize
 
 # 3. Rebuild backend
@@ -456,9 +453,8 @@ nc -zv 13.212.221.200 6060
 |------|---------|-----------|----------|-------|
 | 8080 | Backend API | Local | HTTP | REST API & WebSockets |
 | 3000 | Frontend | Local | HTTP | React dev server |
-| 6062 | Video MPTCP Proxy | Local | TCP | Socat proxy for FFmpeg |
-| 5000 | Sensor Connection | Local→AWS | MPTCP | Direct connection with sourceport=5000 |
-| 6060 | Video Relay Input | Local→AWS | MPTCP | Via socat with sourceport=6060 |
+| 5000 | Sensor Connection | Local→AWS | MPTCP | Direct MPTCP connection |
+| 6060 | Video Streaming | Local→AWS | MPTCP | Direct MPTCP connection |
 | 6061 | HLS Output | AWS | HTTP | Video playback endpoint |
 
 ---
